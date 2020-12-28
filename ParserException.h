@@ -27,10 +27,10 @@ static const char* errors[]{
 
 
 class ParserException {
-	int error_type;
+	int error_type, line;
 public:
-	ParserException(int _error_type) { error_type = _error_type; }
+	ParserException(int _error_type);
 	~ParserException();
 
-	const char* what() const { return errors[error_type]; }
+	const char* what() const;
 };
