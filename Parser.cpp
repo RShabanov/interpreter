@@ -16,23 +16,25 @@ Commands cmd_table[] = {
 };
 
 
-
-
-Parser::Parser(char* _prog) : token() {
+Parser::Parser(char* _prog) {
 	//token = 0;
+	//token = new char[80];
 	token_type = 0;
 	program = _prog;
 }
 
-Parser::~Parser() {}
+Parser::~Parser() {
+	//if (token != 0) delete[] token;
+}
 
 
 void Parser::parse(double& result) {
 	read_token();
 	if (!token.empty()) {
 		parse_relation_oper(result);
-		// ������� �� �������� ������� �� ������� �����
+		// функция по возврату символа во вводный поток
 		// ???
+		//putback();
 	}
 }
 
@@ -117,7 +119,7 @@ void Parser::parse_mul_div(double& result) {
 	}
 }
 
-// ���������� � ������������� �������
+
 void Parser::parse_power(double& result) {
 	parse_unary(result);
 	
@@ -127,7 +129,7 @@ void Parser::parse_power(double& result) {
 		read_token();
 		parse_power(power);
 
-		result = pow(result, power);
+		result = std::pow(result, power);
 	}
 }
 
@@ -149,6 +151,11 @@ void Parser::parse_unary(double& result) {
 void Parser::parse_brackets(double& result) {
 	if (token[0] == '(') {
 		read_token();
+		// ???
+		// потому что это странно,
+		// что мы не учитываем такую возможность:
+		// (a >= b), например
+		// 
 		//parse_relation_oper(result);
 		parse_add_sub(result);
 
@@ -160,7 +167,42 @@ void Parser::parse_brackets(double& result) {
 
 
 
-// ������ ���������� ������
+
+void Parser::read_values(double& result) {
+	switch (token_type) {
+	case VARIABLE:
+		result = find_variable();
+		read_token();
+		break;
+	case NUMBER:
+		result = atof(&token[0]);
+		read_token();
+		break;
+	case FUNCTION:
+		// TODO
+		// реализовать чтение функции
+		break;
+	default: throw ParserException(INVALID_SYNTAX);
+	}
+}
+
+
+double Parser::find_variable() const {
+	// TODO
+	// реализовать поиск переменных в массиве
+	// желательно реализовать поиск в отсортированном по алфавиту массиве
+	// 
+	// поиск осуществлять с конца
+	//
+	// или
+	// данная функция должна находиться с другом месте
+	// например, в классе init или каком-то подобном
+	return 0;
+}
+
+
+
+// чтение следующего токена
 void Parser::read_token() {
 	register char* temp = &token[0];
 	token_type = 0;
@@ -176,18 +218,19 @@ void Parser::read_token() {
 	else if (is_delim()) token_delim(temp);
 	else if (is_quote()) token_quote(temp);
 	else if (isdigit(*program)) token_number(temp);
-	else if (isalpha(*program)) token_string(temp);
+	else if (isalpha(*program)) {
+		token_string(temp);
 
-	*temp = '\0';
-
-	//�� �������� �� ������ �������� ��� ����������
-	if (token_type == STRING) {
-		tok = find_cmd();
-		if (!tok) token_type = VARIABLE;
-		// TODO 
-		// �������� �������� �� �������
-		else token_type = COMMAND;
+		//Не является ли строка командой или переменной
+		if (token_type == STRING) {
+			tok = find_cmd();
+			if (!tok) token_type = VARIABLE;
+			// TODO 
+			// добавить проверку на функцию
+			else token_type = COMMAND;
+		}
 	}
+	//*temp = '\0';
 }
 
 
@@ -224,7 +267,8 @@ void Parser::token_eof() {
 
 void Parser::token_cr() {
 	program += 2;
-	//*token = '\r';
+	/**token = '\r';
+	token[1] = '\n';*/
 	token.push_back('\r');
 	token.push_back('\n');
 	token_type = DELIMITER;
@@ -299,7 +343,7 @@ void Parser::token_number(char* _temp) {
 }
 
 void Parser::token_string(char* _temp) {
-	while (!is_delim()) // ������ �� ��� ��� ���� �� �������� ����������� " ; ,+=<>/*%^()"
+	while (!is_delim()) // Читаем до тех пор пока не встретим разделитель " ; ,+=<>/*%^()"
 		*_temp++ = *program++;
 	token_type = STRING;
 }
@@ -309,5 +353,5 @@ int Parser::find_cmd() const {
 	for (int i = 0; *cmd_table[i].command; i++)
 		if (!strcmp(cmd_table[i].command, &token[0]))
 			return cmd_table[i].tok;
-	return 0; // ����������� �������
+	return 0; // неизвестная команда
 }
