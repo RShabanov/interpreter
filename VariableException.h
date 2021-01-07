@@ -1,17 +1,14 @@
 #pragma once
 #include <string>
 #include "errors.h"
-#include "service_vars.h"
 
 
-
-class ParserException {
+class VariableException {
 	int error_type;
-	//char* prog_start, *prog;
 	std::string error;
 public:
-	ParserException(int _error_type);
-	~ParserException();
+	VariableException(int _error_type);
+	~VariableException();
 
 	const char* what();
 	int type() const;
