@@ -18,6 +18,8 @@ class Cmd {
 	void assign_var();
 	void define_var(double& _value, bool& is_defined);
 
+	void out_string(std::string&);
+
 	void cmd_print();
 	void cmd_input();
 	void cmd_if();

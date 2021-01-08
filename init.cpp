@@ -63,6 +63,7 @@ void Init::run() {
 					cmd.execute(tok);
 				}
 				else {
+					parser.putback_token();
 					token_expression();
 				}
 			}
@@ -114,175 +115,77 @@ void Init::print_help() const {
 
 
 void Init::token_variable() const {
-	// TODO
-	// можно ли написать это более красиво???
-	// 
-	// Problems:
-	// a = 3, b (может, оставить???)
-	// a = b (лишний вывод) !!!
-
 	register char* temp = program - token.length();
+	std::string name(token);
 
 	parser.read_token();
-	if (strchr("+-/*^", token[0]) ||
-		tok == EOL || tok == FINISHED) { // %
-		program = temp;
-		//token_expression();
-		double res;
-		parser.parse(res);
+	program = temp;
 
-		if (tok != EOL && tok != FINISHED)
-			throw ParserException(INVALID_SYNTAX);
-
-		std::cout << res << std::endl;
-		return;
-	}
-	else {
-		parser.putback_token();
-		define_variable();
-	}
-
-
-
-	/*register size_t var_index = tok;
-	register char* start = program - token.length();
-
-	parser.read_token();
-	if (token[0] == '=') {
-		parser.read_token();
-		if (token_type == VARIABLE) {
-			register size_t temp_var_index = tok;
-			token_variable();
-
-			change_var_value(var_index, get_variable(temp_var_index));
-		}
-		else {
-			double res;
-			parser.putback_token();
-			parser.parse(res);
-
-			change_var_value(var_index, res);
-		}
-	}
-	else if (token[0] != ',') {
-		program = start + token.length();
+	if (strchr("+-/*^", token[0]) || is_end()) // %
 		token_expression();
-		return;
-	}
+	else if ((token == "(" || isalpha(token[0])) &&
+		cmd.is_cmd(name.c_str(), tok)) {
+		// если имя переменной совпадает с командой
 
-	if (token[0] == ',') {
+		register size_t cmd_tok = tok;
+		if (!parentheses.empty()) 
+			parentheses.pop_back(); // вернуть баланс скобок
+
 		parser.read_token();
-		token_variable();
+		cmd.execute(cmd_tok);
+		// если имя переменной совпадает с командой
 	}
-	else if (tok != EOL || tok != FINISHED)
-		throw ParserException(INVALID_SYNTAX);*/
-
+	else define_variable();
 }
 
 
 void Init::token_expression() const {
-	double res;
-
-	parser.putback_token();
+	register double res;
 	parser.parse(res);
 
-	if (tok != EOL && tok != FINISHED)
-		throw ParserException(INVALID_SYNTAX);
+	if (!is_end()) throw ParserException(INVALID_SYNTAX);
 
 	std::cout << res << std::endl;
 }
 
 
 void Init::define_variable() const {
-	register size_t var_index = tok;
+	register char* start = program;
+	register double res;
 
 	parser.read_token();
 
-	if (token[0] == '=') {
-		register char* ptr = program;
+	register size_t var_index = tok;
+
+	parser.read_token();
+	if (token == "=") {
 		parser.read_token();
-
-		double res;
-		
+		parser.putback_token();
 		if (token_type == VARIABLE) {
-			register size_t temp = tok;
-			/*register char* ptr = program;
+			register size_t temp_index = tok;
 
-			parser.read_token();
-			if (token[0] != '=' && tok != EOL && tok != FINISHED)
-				throw ParserException(INVALID_SYNTAX);
-
-			program = ptr;*/
-			program = ptr;
-			parser.parse(res);
-
-			register char oper = token[0];
-			register char* t = program;
-			program = ptr;
-
-			parser.read_token();
-			parser.read_token();
-
-			if (program != t && oper == '=')
-				throw ParserException(INVALID_SYNTAX);
-				
-			if (oper == '\0') {
-				program = t;
-				token_type = DELIMITER;
-				tok = EOL;
-				change_var_value(var_index, res);
-			}
-			else {
-				define_variable();
-				change_var_value(var_index, get_variable(temp));
-			}
-
-
+			define_variable();
+			if (*program) parser.parse(res);
+			else res = get_variable(temp_index);
 		}
 		else {
-			parser.putback_token();
 			parser.parse(res);
-			parser.read_token();
-
-			if (token[0] != '=')
-				change_var_value(var_index, res);
-			else throw ParserException(INVALID_SYNTAX);
+			if (!is_end()) throw ParserException(INVALID_SYNTAX);
 		}
+
+		change_var_value(var_index, res);
 	}
-	
-	if (token[0] == ',') {
-		parser.read_token();
-		if (token_type == VARIABLE)
-			define_variable();
-		else throw ParserException(INVALID_SYNTAX);
+	else {
+		program = start;
+		parser.parse(res);
+
+		if (!is_end()) throw ParserException(INVALID_SYNTAX);
+
+		program = start;
 	}
-	else if (tok != EOL && tok != FINISHED)
-		throw ParserException(INVALID_SYNTAX);
+}
 
 
-
-	//do {
-	//	parser.read_token();
-
-	//	if (token[0] == '=') {
-	//		double res;
-	//		register char* temp = program;
-
-	//		parser.read_token();
-	//		if (token_type == VARIABLE)
-	//		//parser.parse(res);
-
-	//		change_var_value(var_index, res);
-	//	}
-	//	else if (token[0] == ',') {
-	//		parser.read_token();
-	//		if (token_type == VARIABLE) {
-	//			//var_index = tok;
-	//			define_variable();
-	//		}
-	//		else throw ParserException(INVALID_SYNTAX);
-	//	}
-	//	else throw ParserException(INVALID_SYNTAX);
-
-	//} while (tok != EOL && tok != FINISHED);
+inline bool Init::is_end() const {
+	return tok == EOL || tok == FINISHED;
 }

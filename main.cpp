@@ -41,27 +41,10 @@ int main() {
 
 	// отсутсвует поддержка любого языка, кроме English
 
-	/*Init init_program;
-	init_program.run();*/
+	Init init_program;
+	init_program.run();
 
 
-	unique_ptr<string> films[5] = {
-		unique_ptr<string>(new string("first")),
-		unique_ptr<string>(new string("second")),
-		unique_ptr<string>(new string("third")),
-		unique_ptr<string>(new string("fourth")),
-		unique_ptr<string>(new string("fifth")),
-	};
-
-	unique_ptr<string> winner;
-	winner = films[2];
-
-	cout << "Films:\n";
-	for (int i = 0; i < 5; i++)
-		cout << *films[i] << endl;
-	cout << "Winner: " << *winner << endl;
-
-
-	cin.get();
+	//cin.get();
 	return 0;
 }

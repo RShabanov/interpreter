@@ -142,7 +142,9 @@ void Parser::parse_brackets(double& result) {
 		read_token();
 		parse_relation_oper(result);
 
+		if (token == "=") throw ParserException(INVALID_SYNTAX);
 		if (token[0] != ')') throw ParserException(EXTRA_BRACKET);
+		
 		read_token();
 	}
 	else read_values(result);
@@ -250,9 +252,11 @@ inline bool Parser::is_escape_char(char* str) const {
 	return false;
 }
 
+
 inline void Parser::skip_space() {
 	while (is_space(program)) program++;
 }
+
 
 
 void Parser::token_eof() {
@@ -316,6 +320,7 @@ void Parser::token_delim() {
 			throw ParserException(EXTRA_BRACKET);
 		parentheses.pop_back();
 	}
+	
 	token.push_back(*program);
 	program++;
 	token_type = DELIMITER;
@@ -336,7 +341,7 @@ void Parser::token_quote() {
 }
 
 void Parser::token_number() {
-	while (!strchr("+-*^/<!=>;(),\r", *program))
+	while (!strchr("+-*^/<!=>;(),\r \t", *program))
 		token.push_back(*program++);
 	token_type = NUMBER;
 }
@@ -372,3 +377,51 @@ char Parser::get_escape_char(char* _str) const {
 	default: return *_str;
 	}
 }
+
+
+//std::string assign_var() {
+//	register char* start = program;
+//	register double res;
+//
+//	read_token();
+//
+//	std::string var(token);
+//	register size_t var_index = tok;
+//
+//	read_token();
+//	if (token == "=") {
+//		//start = program;
+//
+//		read_token();
+//		if (token_type == VARIABLE) {
+//			register size_t temp_index = tok;
+//
+//			putback_token();
+//			assign_var();
+//
+//			if (tok != EOL && tok != FINISHED) // *program ???
+//				parse(res);
+//			else res = get_variable(temp_index);
+//		}
+//		else {
+//			putback_token();
+//			parse(res);
+//
+//			if (tok != EOL && tok != FINISHED)
+//				throw ParserException(INVALID_SYNTAX);
+//		}
+//
+//		change_var_value(var_index, res);
+//	}
+//	else {
+//		program = start;
+//		parser.parse(res);
+//
+//		if (tok != EOL && tok != FINISHED)
+//			throw ParserException(INVALID_SYNTAX);
+//
+//		program = start;
+//	}
+//
+//	return var;
+//}

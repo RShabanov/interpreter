@@ -48,8 +48,8 @@ public:
 
 	void read_token();
 	void putback_token();
-
 	void parse(double& result);
+
 };
 
 extern Parser parser;

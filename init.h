@@ -10,6 +10,8 @@ class Init
 {
 	Init(const Init&);
 
+	bool is_end() const;
+
 	void reset(std::string& _str) const;
 
 	void token_variable() const;

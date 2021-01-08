@@ -21,7 +21,7 @@ enum tokens : size_t {
 	ELIF,
 	WHILE, 
 	FOR,
-	DEF, 
+	FUN, 
 	LET,
 	COLON,
 	END, 
