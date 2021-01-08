@@ -9,4 +9,4 @@ extern char* program, *prog_start;
 
 extern std::string token;
 extern int token_type; // содержит тип элемента
-extern size_t tok; // содержит внутреннее представление элемента 
+extern int tok; // содержит внутреннее представление элемента 

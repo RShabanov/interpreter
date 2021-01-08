@@ -1,6 +1,11 @@
 #include "Parser.h"
 
 
+bool is_end() {
+	return tok == EOL || tok == FINISHED;
+}
+
+// -------------------------------
 Parser parser;
 
 Parser::Parser() {
@@ -155,7 +160,7 @@ void Parser::parse_brackets(double& result) {
 void Parser::read_values(double& result) {
 	switch (token_type) {
 	case VARIABLE:
-		result = get_variable(tok);
+		result = get_var(token);
 		read_token();
 		break;
 	case NUMBER:
@@ -185,8 +190,8 @@ void Parser::read_token() {
 	else if (isalpha(*program)) {
 		token_string();
 
-		if (is_variable(token.c_str(), tok)) token_type = VARIABLE;
-		else if (is_function(token.c_str(), tok)) token_type = FUNCTION;
+		if (is_var(token)) token_type = VARIABLE;
+		else if (is_function(token)) token_type = FUNCTION;
 		else token_type = STRING;
 
 		/*if (is_cmd(token.c_str(), tok)) token_type = COMMAND;
@@ -223,15 +228,16 @@ inline bool Parser::is_quote(char* symbol) const {
 
 inline bool Parser::is_number(char* str) const {
 	register char* temp = str;
-	register size_t number_size = 0;
+	register bool fst_digit = false;
 
 	while (*temp && !strchr("+-*^/=;(), \t\r", *temp)) {
 		if (*temp != '.' && !isdigit(*temp)) {
-			if (number_size && isalpha(*temp)) 
+			if (fst_digit && isalpha(*temp)) 
 				throw ParserException(INVALID_SYNTAX);
 			return false;
 		}
 		temp++;
+		fst_digit = true;
 	}
 	return true;
 }
@@ -377,51 +383,3 @@ char Parser::get_escape_char(char* _str) const {
 	default: return *_str;
 	}
 }
-
-
-//std::string assign_var() {
-//	register char* start = program;
-//	register double res;
-//
-//	read_token();
-//
-//	std::string var(token);
-//	register size_t var_index = tok;
-//
-//	read_token();
-//	if (token == "=") {
-//		//start = program;
-//
-//		read_token();
-//		if (token_type == VARIABLE) {
-//			register size_t temp_index = tok;
-//
-//			putback_token();
-//			assign_var();
-//
-//			if (tok != EOL && tok != FINISHED) // *program ???
-//				parse(res);
-//			else res = get_variable(temp_index);
-//		}
-//		else {
-//			putback_token();
-//			parse(res);
-//
-//			if (tok != EOL && tok != FINISHED)
-//				throw ParserException(INVALID_SYNTAX);
-//		}
-//
-//		change_var_value(var_index, res);
-//	}
-//	else {
-//		program = start;
-//		parser.parse(res);
-//
-//		if (tok != EOL && tok != FINISHED)
-//			throw ParserException(INVALID_SYNTAX);
-//
-//		program = start;
-//	}
-//
-//	return var;
-//}

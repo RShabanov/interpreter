@@ -7,4 +7,4 @@ char* program, *prog_start;
 
 std::string token;
 int token_type;
-size_t tok;
+int tok;

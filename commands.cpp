@@ -21,6 +21,48 @@ CommandsTable cmd_table[] = {
 Cmd cmd;
 
 
+void assign_variable() {
+	// input: string like "a = b = 5" or "a = 5", etc.
+
+	register char* start = const_cast<char*>(program);
+	register double res;
+
+	parser.read_token();
+	register Name target(token);
+
+	parser.read_token();
+	if (token[0] == ',') return;
+	if (token[0] == '=') {
+		parser.read_token();
+		parser.putback_token();
+
+		if (token_type == VARIABLE) {
+			register Name source(token);
+
+			assign_variable();
+			if (*program) parser.parse(res);
+			else res = get_var(source);
+		}
+		else {
+			parser.parse(res);
+			if (!is_end() && token[0] != ',') 
+				throw ParserException(INVALID_SYNTAX);
+		}
+
+		assign_var(target, res);
+	}
+	else {
+		parser.putback_token();
+		program = start;
+		parser.parse(res);
+
+		if (!is_end() && token[0] != ',') 
+			throw ParserException(INVALID_SYNTAX);
+		program = start;
+	}
+}
+
+
 // ----------------------------------
 
 Cmd::Cmd() {}
@@ -88,27 +130,28 @@ void Cmd::cmd_for() {}
 void Cmd::cmd_def() {}
 void Cmd::cmd_let() {
 	// на вход program указывает на "var = 5"
-
-	register size_t cnt = 0;
+	std::vector<Name> var_map;
 
 	try {
 		do {
 			parser.read_token();
-			if (token_type == STRING) assign_var();
+
+			if (token_type == STRING) {
+				define_variable();
+				var_map.push_back(token);
+			}
 			else if (token_type == VARIABLE)
 				throw VariableException(ALREADY_DEFINED);
 			else throw ParserException(INVALID_SYNTAX);
 
-			cnt++;
-
-		} while (tok != EOL && tok != FINISHED);
+		} while (!is_end());
 	}
 	catch (ParserException& e) {
-		while (cnt-- > 0) delete_last_var();
+		for (auto var_name : var_map) delete_var(var_name);
 		throw ParserException(e.type());
 	}
 	catch (VariableException& e) {
-		while (cnt-- > 0) delete_last_var();
+		for (auto var_name : var_map) delete_var(var_name);
 		throw VariableException(e.type());
 	}
 
@@ -124,7 +167,7 @@ void Cmd::cmd_return() {}
 // AUXILIARY METHODS
 //
 
-bool Cmd::is_cmd(const char* _cmd, size_t& pos) {
+bool Cmd::is_cmd(const char* _cmd, int& pos) {
 	for (register int i = 0; *cmd_table[i].command; i++)
 		if (!strcmp(cmd_table[i].command, _cmd)) {
 			pos = cmd_table[i].token;
@@ -135,34 +178,26 @@ bool Cmd::is_cmd(const char* _cmd, size_t& pos) {
 }
 
 
-void Cmd::assign_var() {
-	register bool is_defined = false;
-	std::string var_name(token);
+void Cmd::define_variable() {
+	register char* line = program - token.length();
+	Name var_name(token);
 
 	parser.read_token();
-	if (token_type == DELIMITER) {
-		double var_value;
-		define_var(var_value, is_defined);
+	if (token[0] == ',' || is_end()) {
+		create_var(var_name);
+		return;
+	}
+	else if (token[0] == '=') {
+		create_var(var_name);
 
-		if (is_defined) create_variable(var_name.c_str(), var_value);
-		else throw VariableException(NOT_INITIALIZED);
+		parser.putback_token();
+		program = line;
+
+		assign_variable();
+		parser.read_token();
 	}
 	else throw ParserException(INVALID_SYNTAX);
 }
-
-
-void Cmd::define_var(double& _value, bool& is_defined) {
-	if (tok != EOL && tok != FINISHED) {
-		if (token[0] == '=') {
-			parser.parse(_value);
-			parser.read_token();
-
-			is_defined = true;
-		}
-		else throw ParserException(INVALID_SYNTAX);
-	}
-}
-
 
 
 void Cmd::out_string(std::string& result_str) {

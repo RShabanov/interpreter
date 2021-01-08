@@ -10,6 +10,9 @@
 #include "service_vars.h"
 
 
+bool is_end();
+
+
 class Parser {
 
 	bool is_cr(char*) const; // carriage return

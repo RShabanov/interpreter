@@ -13,10 +13,12 @@ extern struct CommandsTable {
 
 // ------------------------
 
+void assign_variable();
+
+
 class Cmd {
 
-	void assign_var();
-	void define_var(double& _value, bool& is_defined);
+	void define_variable();
 
 	void out_string(std::string&);
 
@@ -35,7 +37,7 @@ public:
 	Cmd();
 	~Cmd();
 
-	bool is_cmd(const char* _cmd, size_t& pos);
+	bool is_cmd(const char* _cmd, int& pos);
 	
 	void execute(int cmd_token);
 };

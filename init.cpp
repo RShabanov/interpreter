@@ -91,7 +91,7 @@ void Init::run() {
 
 
 void Init::reset(std::string& _str) const {
-	program = prog_start = &_str[0];
+	program = prog_start = const_cast<char*>(_str.c_str());
 	token_type = tok = 0;
 	parentheses.clear();
 }
@@ -119,15 +119,18 @@ void Init::token_variable() const {
 	std::string name(token);
 
 	parser.read_token();
-	program = temp;
+	parser.putback_token();
 
-	if (strchr("+-/*^", token[0]) || is_end()) // %
+	program = temp;
+	const char opers[] = { '+','-','/','*','^','>','<', EQ, NE, GE, LE, 0 };
+
+	if (strchr(opers, token[0]) || is_end()) // %
 		token_expression();
 	else if ((token == "(" || isalpha(token[0])) &&
 		cmd.is_cmd(name.c_str(), tok)) {
 		// если имя переменной совпадает с командой
 
-		register size_t cmd_tok = tok;
+		register int cmd_tok = tok;
 		if (!parentheses.empty()) 
 			parentheses.pop_back(); // вернуть баланс скобок
 
@@ -135,7 +138,10 @@ void Init::token_variable() const {
 		cmd.execute(cmd_tok);
 		// если имя переменной совпадает с командой
 	}
-	else define_variable();
+	else do {
+		assign_variable();
+		parser.read_token();
+	} while (!is_end());
 }
 
 
@@ -146,46 +152,4 @@ void Init::token_expression() const {
 	if (!is_end()) throw ParserException(INVALID_SYNTAX);
 
 	std::cout << res << std::endl;
-}
-
-
-void Init::define_variable() const {
-	register char* start = program;
-	register double res;
-
-	parser.read_token();
-
-	register size_t var_index = tok;
-
-	parser.read_token();
-	if (token == "=") {
-		parser.read_token();
-		parser.putback_token();
-		if (token_type == VARIABLE) {
-			register size_t temp_index = tok;
-
-			define_variable();
-			if (*program) parser.parse(res);
-			else res = get_variable(temp_index);
-		}
-		else {
-			parser.parse(res);
-			if (!is_end()) throw ParserException(INVALID_SYNTAX);
-		}
-
-		change_var_value(var_index, res);
-	}
-	else {
-		program = start;
-		parser.parse(res);
-
-		if (!is_end()) throw ParserException(INVALID_SYNTAX);
-
-		program = start;
-	}
-}
-
-
-inline bool Init::is_end() const {
-	return tok == EOL || tok == FINISHED;
 }

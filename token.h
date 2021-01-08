@@ -13,7 +13,7 @@ enum token_types {
 	CLOSE_PARENTHESIS,
 };
 
-enum tokens : size_t {
+enum tokens {
 	PRINT = 1, 
 	INPUT,
 	IF, 
