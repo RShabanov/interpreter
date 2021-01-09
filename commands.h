@@ -4,7 +4,6 @@
 #include "Parser.h"
 
 
-extern int cmd_table_size;
 
 extern struct CommandsTable {
 	const char* command;
@@ -14,6 +13,7 @@ extern struct CommandsTable {
 // ------------------------
 
 void assign_variable();
+double compute_exp();
 
 
 class Cmd {
@@ -33,10 +33,12 @@ class Cmd {
 	void cmd_let();
 	void cmd_return();
 
+
 public:
 	Cmd();
 	~Cmd();
 
+	bool is_return_cmd(int);
 	bool is_cmd(const char* _cmd, int& pos);
 	
 	void execute(int cmd_token);

@@ -263,6 +263,11 @@ inline void Parser::skip_space() {
 	while (is_space(program)) program++;
 }
 
+bool Parser::is_expression(char symbol) {
+	const char opers[] = { '+','-','/','*','^','>','<', EQ, NE, GE, LE, 0 };
+	return strchr(opers, symbol) && symbol != '\0';
+}
+
 
 
 void Parser::token_eof() {
@@ -353,7 +358,7 @@ void Parser::token_number() {
 }
 
 void Parser::token_string() {
-	while (!strchr(" \t; ,+=<>/*%^()\r\"", *program)) { // Читаем до тех пор пока не встретим разделитель " ; ,+=<>/*%^()"
+	while (!strchr(" \t; ,-+=<!>/*%^()\r\"", *program)) { // Читаем до тех пор пока не встретим разделитель " ; ,+=<>/*%^()"
 		token.push_back(*program++);
 	}
 }
@@ -364,7 +369,7 @@ void Parser::putback_token() {
 	while (*t) {
 		if (*t == '(' && !parentheses.empty()) 
 			parentheses.pop_back();
-		else if (*t == ')') parentheses.push_back(')');
+		else if (*t == ')') parentheses.push_back('('); // ')'
 		program--;
 		t++;
 	}

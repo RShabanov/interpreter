@@ -49,6 +49,8 @@ public:
 	Parser();
 	~Parser();
 
+	bool is_expression(char);
+
 	void read_token();
 	void putback_token();
 	void parse(double& result);

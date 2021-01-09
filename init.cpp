@@ -29,7 +29,7 @@ void Init::run() {
 	using std::getline;
 
 	std::string line, str;
-	double res;
+	double res = 0;
 	
 	cout << "> ";
 
@@ -60,7 +60,11 @@ void Init::run() {
 					// function_act
 				}
 				else if (cmd.is_cmd(token.c_str(), tok)) {
-					cmd.execute(tok);
+					if (cmd.is_return_cmd(tok)) {
+						parser.putback_token();
+						token_expression();
+					}
+					else cmd.execute(tok);
 				}
 				else {
 					parser.putback_token();
@@ -71,6 +75,7 @@ void Init::run() {
 		catch (ParserException& e) {
 			if (e.type() != EXTRA_BRACKET || parentheses.empty()) {
 				cout << e.what() << endl;
+				parentheses.clear();
 			}
 			else {
 				cout << "\t";
@@ -79,10 +84,12 @@ void Init::run() {
 		}
 		catch (VariableException& e) {
 			cout << e.what() << endl;
+			parentheses.clear();
 		}
 		catch (...) {
 			cout << "Something went wrong.\n"
 				<< "Run-time error.\n";
+			parentheses.clear();
 		}
 		str.clear();
 		cout << "> ";
@@ -122,12 +129,14 @@ void Init::token_variable() const {
 	parser.putback_token();
 
 	program = temp;
-	const char opers[] = { '+','-','/','*','^','>','<', EQ, NE, GE, LE, 0 };
 
-	if (strchr(opers, token[0]) || is_end()) // %
+	if (parser.is_expression(token[0]) || is_end()) // %
 		token_expression();
-	else if ((token == "(" || isalpha(token[0])) &&
+	else if ((token[0] == ')' || isalpha(token[0])) &&
 		cmd.is_cmd(name.c_str(), tok)) {
+		// TODO
+		// !!!!!
+
 		// если имя переменной совпадает с командой
 
 		register int cmd_tok = tok;
@@ -146,8 +155,8 @@ void Init::token_variable() const {
 
 
 void Init::token_expression() const {
-	register double res;
-	parser.parse(res);
+	register double res = compute_exp();
+	parser.read_token();
 
 	if (!is_end()) throw ParserException(INVALID_SYNTAX);
 
