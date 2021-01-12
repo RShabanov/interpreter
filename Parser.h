@@ -1,82 +1,57 @@
 #pragma once
-#include "ParserException.h"
+#include <iostream>
 #include <cstdlib>
 #include <cstring>
 #include <string>
 #include <cmath>
-
-
-enum token_types {
-	NUMBER = 1,
-	VARIABLE, STRING, FUNCTION,
-	COMMAND, QUOTE, DELIMITER,
-	OPEN_PARENTHESIS,
-	CLOSE_PARENTHESIS,
-};
-
-enum tokens {
-	PRINT = 1, INPUT,
-	IF, ELSE, ELIF,
-	WHILE, FOR,
-	DEF, COLON,
-	END, RETURN, FINISHED, EOL
-};
-
-// operators
-enum opers {
-	EQ = 1, // ==
-	NE, // !=
-	GE, // >=
-	LE, // <=
-};
-
-struct Commands {
-	const char* command;
-	int tok;
-} cmd_table[];
-
-
+#include "token.h"
+#include "brackets.h"
+#include "variables.h"
 
 
 class Parser {
-	//char* token;
-	std::string token;
-	int tok;
-	int token_type;
-	char* program;
 
-	bool is_eof() const;
-	bool is_space() const;
-	bool is_cr() const; // carriage return
-	bool is_opers() const;
-	bool is_delim() const;
-	bool is_quote() const;
+	bool is_cr(char) const; // carriage return
+	bool is_eof(char) const;
+	bool is_space(char) const;
+	bool is_opers(char) const;
+	bool is_delim(char) const;
+	bool is_quote(char) const;
+	bool is_number(char*) const;
+	bool is_string(char) const;
+	bool is_escape_char(char*) const;
 
 	void token_eof();
 	void token_cr();
-	void token_opers(char* _temp);
-	void token_delim(char* _temp);
-	void token_quote(char* _temp);
-	void token_number(char* _temp);
-	void token_string(char* _temp);
+	void token_opers();
+	void token_delim();
+	void token_quote();
+	void token_number();
+	void token_string();
+	void token_brace();
 
-	void parse_brackets(double& result); // РїР°СЂСЃРёРЅРі СЃРєРѕР±РѕРє ()
-	void parse_unary(double& result); // РїР°СЂСЃРёРЅРі СѓРЅР°СЂРЅС‹С… РѕРїРµСЂР°С†РёР№
-	void parse_power(double& result); // РїР°СЂСЃРёРЅРі СЃС‚РµРїРµРЅРё
-	void parse_mul_div(double& result); // РїР°СЂСЃРёРЅРі СѓРјРЅРѕР¶РµРЅРёСЏ\РґРµР»РµРЅРёСЏ
-	void parse_add_sub(double& result); // РїР°СЂСЃРёРЅРі СЃР»РѕР¶РµРЅРёСЏ\РІС‹С‡РёС‚Р°РЅРёСЏ
-	void parse_relation_oper(double& result); // РїР°СЂСЃРёРЅРі СЂРµР»СЏС†РёРѕРЅРЅС‹С… РІС‹СЂР°Р¶РµРЅРёР№
+	void parse_brackets(double& result); // парсинг скобок ()
+	void parse_unary(double& result); // парсинг унарных операций
+	void parse_power(double& result); // парсинг степени
+	void parse_mul_div(double& result); // парсинг умножения\деления
+	void parse_add_sub(double& result); // парсинг сложения\вычитания
+	void parse_relation_oper(double& result); // парсинг реляционных выражений
 
-	void read_token();
 	void read_values(double& result);
+	void skip_space();
 
-	int find_cmd() const;
-	double find_variable() const;
-	//double find_function() const;
+	char get_escape_char(char* _str) const;
 
 public:
-	Parser(char* _prog);
+	Parser();
 	~Parser();
+	
+	bool is_end() const;
+	bool is_expression(char);
 
+	void read_token();
+	void putback_token();
 	void parse(double& result);
 };
+
+extern Parser parser;

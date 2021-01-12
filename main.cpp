@@ -1,17 +1,16 @@
 #include <iostream>
+#include <iterator>
 #include "Parser.h"
+#include "scanner.h"
 using namespace std;
-
 
 
 int main() {
 
-	string str = "5+(4-3)*2";
+	Scanner scanner;
+	scanner.run();
 
-	Parser parser(&str[0]);
 
-	double res = 0;
-	parser.parse(res);
-	cin.get();
+	//cin.get();
 	return 0;
 }

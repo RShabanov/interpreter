@@ -1,40 +1,25 @@
 #include "Parser.h"
 
 
-Commands cmd_table[] = {
-	"print", PRINT,
-	"input", INPUT,
-	"if", IF,
-	"else", ELSE,
-	"elif", ELIF,
-	"while", WHILE,
-	"for", FOR,
-	"def", DEF,
-	"return", RETURN,
-	":", COLON,
-	"", END
-};
+// -------------------------------
+Parser parser;
 
-
-Parser::Parser(char* _prog) {
-	//token = 0;
-	//token = new char[80];
-	token_type = 0;
-	program = _prog;
+Parser::Parser() {
+	//token_type = 0;
+	//prog_start = program = 0;
 }
 
-Parser::~Parser() {
-	//if (token != 0) delete[] token;
-}
+Parser::~Parser() {}
 
 
 void Parser::parse(double& result) {
 	read_token();
 	if (!token.empty()) {
 		parse_relation_oper(result);
-		// функция по возврату символа во вводный поток
-		// ???
-		//putback();
+		putback_token();
+
+		// TODO
+		// exception for strings like "12 5"
 	}
 }
 
@@ -45,7 +30,7 @@ void Parser::parse_relation_oper(double& result) {
 	char relation_ops[] = { EQ, NE,GE,LE,'>','<',0 };
 	register char oper = token[0];
 
-	if (strchr(relation_ops, oper)) {
+	if (strchr(relation_ops, oper) && oper != '\0') {
 		double temp;
 
 		read_token();
@@ -79,7 +64,7 @@ void Parser::parse_add_sub(double& result) {
 
 	register char oper = token[0];
 	
-	if (oper == '+' || oper == '-') {
+	while (oper == '+' || oper == '-') {
 		double temp;
 
 		read_token();
@@ -93,6 +78,8 @@ void Parser::parse_add_sub(double& result) {
 			result += temp;
 			break;
 		}
+
+		oper = token[0];
 	}
 }
 
@@ -102,7 +89,7 @@ void Parser::parse_mul_div(double& result) {
 
 	register char oper = token[0];
 
-	if (oper == '*' || oper == '/') {
+	while (oper == '*' || oper == '/') { // || oper == '%'
 		double temp;
 
 		read_token();
@@ -115,7 +102,13 @@ void Parser::parse_mul_div(double& result) {
 		case '*':
 			result *= temp;
 			break;
+		case '%':
+			// TODO
+			// ����������� �������� ������� �� ������
+			break;
 		}
+
+		oper = token[0];
 	}
 }
 
@@ -151,15 +144,11 @@ void Parser::parse_unary(double& result) {
 void Parser::parse_brackets(double& result) {
 	if (token[0] == '(') {
 		read_token();
-		// ???
-		// потому что это странно,
-		// что мы не учитываем такую возможность:
-		// (a >= b), например
-		// 
-		//parse_relation_oper(result);
-		parse_add_sub(result);
+		parse_relation_oper(result);
 
-		if (token[0] != ')') throw ParserException(EXTRA_BRACKET);
+		if (token == "=") throw Exception(INVALID_SYNTAX);
+		if (token[0] != ')') throw Exception(EXTRA_BRACKET);
+		
 		read_token();
 	}
 	else read_values(result);
@@ -167,191 +156,248 @@ void Parser::parse_brackets(double& result) {
 
 
 
-
 void Parser::read_values(double& result) {
 	switch (token_type) {
 	case VARIABLE:
-		result = find_variable();
+		result = get_var(token);
 		read_token();
 		break;
 	case NUMBER:
-		result = atof(&token[0]);
+		result = atof(token.c_str());
 		read_token();
 		break;
-	case FUNCTION:
-		// TODO
-		// реализовать чтение функции
-		break;
-	default: throw ParserException(INVALID_SYNTAX);
+	case STRING: throw Exception(UNDEFINED_NAME);
+	default: throw Exception(INVALID_SYNTAX);
 	}
 }
 
 
-double Parser::find_variable() const {
-	// TODO
-	// реализовать поиск переменных в массиве
-	// желательно реализовать поиск в отсортированном по алфавиту массиве
-	// 
-	// поиск осуществлять с конца
-	//
-	// или
-	// данная функция должна находиться с другом месте
-	// например, в классе init или каком-то подобном
-	return 0;
-}
-
-
-
-// чтение следующего токена
+// ������ ���������� ������
 void Parser::read_token() {
-	register char* temp = &token[0];
+	token.clear();
 	token_type = 0;
+	tok = 0;
 
-	if (is_eof()) {
-		token_eof();
-		return;
+	skip_space();
+
+	if (is_eof(*program)) token_eof();
+	else if (is_cr(*program)) token_cr();
+	else if (is_opers(*program)) token_opers();
+	else if (is_delim(*program)) token_delim();
+	else if (is_quote(*program)) token_quote();
+	else if (is_number(program)) token_number();
+	else if (is_string(*program)) {
+		token_string();
+
+		if (is_var(token)) token_type = VARIABLE;
+		//else if (is_function(token)) token_type = FUNCTION;
+		else token_type = STRING;
 	}
-	while (is_space()) program++;
+	else if (brackets.is_brace(*program)) token_brace();
+	else throw Exception(INVALID_SYNTAX);
+}
 
-	if (is_cr()) token_cr();
-	else if (is_opers()) token_opers(temp);
-	else if (is_delim()) token_delim(temp);
-	else if (is_quote()) token_quote(temp);
-	else if (isdigit(*program)) token_number(temp);
-	else if (isalpha(*program)) {
-		token_string(temp);
 
-		//Не является ли строка командой или переменной
-		if (token_type == STRING) {
-			tok = find_cmd();
-			if (!tok) token_type = VARIABLE;
-			// TODO 
-			// добавить проверку на функцию
-			else token_type = COMMAND;
+inline bool Parser::is_eof(char symbol) const {
+	return symbol == '\0';
+}
+
+inline bool Parser::is_space(char symbol) const {
+	return symbol == ' ' || symbol == '\t';
+}
+
+inline bool Parser::is_cr(char symbol) const {
+	return symbol == '\r';
+}
+
+inline bool Parser::is_opers(char symbol) const {
+	return strchr("<!=>", symbol);
+}
+
+inline bool Parser::is_delim(char symbol) const {
+	return strchr("+-*^/=;(),", symbol); // {}
+}
+
+inline bool Parser::is_quote(char symbol) const {
+	return symbol == '"';
+}
+
+inline bool Parser::is_number(char* str) const {
+	register char* temp = str;
+	register bool fst_digit = false;
+
+	while (*temp && !iscntrl(*temp) && !is_delim(*temp)) {
+		if (*temp != '.' && !isdigit(*temp)) {
+			if (fst_digit && isalpha(*temp)) 
+				throw Exception(INVALID_SYNTAX);
+			return false;
 		}
+		temp++;
+		fst_digit = true;
 	}
-	//*temp = '\0';
+	return true;
+}
+
+inline bool Parser::is_string(char s) const {
+	return isalpha(s) || s == '_';
+}
+
+inline bool Parser::is_escape_char(char* str) const {
+	register char* temp = str;
+	if (*temp++ == '\\')
+		switch (*temp) {
+		case 'r':
+		case 'n':
+		case 'v':
+		case 't':
+		case 'b':
+		case 'f':
+		case '0':
+			return true;
+		}
+	return false;
 }
 
 
-inline bool Parser::is_eof() const {
-	return *program == '\0';
+inline void Parser::skip_space() {
+	while (is_space(*program)) program++;
 }
 
-inline bool Parser::is_space() const {
-	return *program == ' ' || *program == '\t';
+bool Parser::is_expression(char symbol) {
+	const char opers[] = { '+','-','/','*','^','>','<', EQ, NE, GE, LE, 0 };
+	return strchr(opers, symbol) && symbol != '\0';
 }
 
-inline bool Parser::is_cr() const {
-	return *program == '\r';
+bool Parser::is_end() const {
+	return tok == EOL || tok == FINISHED;
 }
 
-inline bool Parser::is_opers() const {
-	return strchr("<!=>", *program);
-}
-
-inline bool Parser::is_delim() const {
-	return strchr("+-*^/=;(),", *program);
-}
-
-inline bool Parser::is_quote() const {
-	return *program == '"';
-}
 
 
 void Parser::token_eof() {
-	//*token = 0;
 	token_type = DELIMITER;
 	tok = FINISHED;
 }
 
 void Parser::token_cr() {
 	program += 2;
-	/**token = '\r';
-	token[1] = '\n';*/
 	token.push_back('\r');
 	token.push_back('\n');
 	token_type = DELIMITER;
 	tok = EOL;
 }
 
-void Parser::token_opers(char* _temp) {
+void Parser::token_opers() {
 	switch (*program) {
 	case '<':
 		if (*(program + 1) == '=') {
 			program += 2;
-			*_temp = LE;
+			token.push_back(LE);
 		}
 		else {
 			program++;
-			*_temp = '<';
+			token.push_back('<');
 		}
 		break;
 	case '>':
 		if (*(program + 1) == '=') {
 			program += 2;
-			*_temp = GE;
+			token.push_back(GE);
 		}
 		else {
 			program++;
-			*_temp = '>';
+			token.push_back('>');
 		}
 		break;
 	case '=':
 		if (*(program + 1) == '=') {
 			program += 2;
-			*_temp = EQ;
+			token.push_back(EQ);
 		}
-		else return;
+		else token_delim();
 		break;
 	case '!':
 		if (*(program + 1) == '=') {
 			program += 2;
-			*_temp = NE;
+			token.push_back(NE);
 		}
-		else throw ParserException(INVALID_SYNTAX);
+		else throw Exception(INVALID_SYNTAX);
 		break;
 	}
+
+	token_type = DELIMITER;
+}
+
+void Parser::token_delim() {
+	if (brackets.is_parenthesis(*program))
+		brackets.push(*program);
 	
-	_temp++;
-	*_temp = '\0';
+	token.push_back(*program);
+	program++;
 	token_type = DELIMITER;
+	/*token_type = (*program == '{' ? OPEN_BRACE :
+		*program == '}' ? CLOSE_BRACE : DELIMITER);*/
 }
 
-void Parser::token_delim(char* _temp) {
-	*_temp = *program;
+void Parser::token_quote() {
 	program++;
-	_temp++;
-	*_temp = 0;
-	token_type = DELIMITER;
-}
-
-void Parser::token_quote(char* _temp) {
+	while (*program != '"' && *program != '\r') {
+		if (is_escape_char(program)) {
+			token.push_back(get_escape_char(program + 1));
+			program += 2;
+		}
+		else token.push_back(*program++);
+	}
+	if (*program == '\r') throw Exception(MISS_QUOTE);
 	program++;
-	while (*program != '"' && *program != '\r')
-		*_temp++ = *program++;
-	if (*program == '\r') throw ParserException(MISS_QUOTE);
-	program++;
-	*_temp = 0;
 	token_type = QUOTE;
 }
 
-void Parser::token_number(char* _temp) {
-	while (!is_delim()) *_temp++ = *program++;
-	//*_temp = '\0';
+void Parser::token_number() {
+	while (isdigit(*program))
+		token.push_back(*program++);
+
+	/*while (!strchr("+-*^/<!=>;(),\r \t", *program))
+		token.push_back(*program++);*/
 	token_type = NUMBER;
 }
 
-void Parser::token_string(char* _temp) {
-	while (!is_delim()) // Читаем до тех пор пока не встретим разделитель " ; ,+=<>/*%^()"
-		*_temp++ = *program++;
-	token_type = STRING;
+void Parser::token_string() {
+	while (isalnum(*program) || *program == '_')
+		token.push_back(*program++);
+}
+
+void Parser::token_brace() {
+	if (brackets.is_parenthesis(*program))
+		brackets.push(*program);
+	token.push_back(*program++);
+	token_type = COMMAND;
 }
 
 
-int Parser::find_cmd() const {
-	for (int i = 0; *cmd_table[i].command; i++)
-		if (!strcmp(cmd_table[i].command, &token[0]))
-			return cmd_table[i].tok;
-	return 0; // неизвестная команда
+void Parser::putback_token() {
+	const char* t = token.c_str();
+	while (*t) {
+		//if (*t == '(' && !brackets.empty()) 
+		//	brackets.pop_back();
+		//else if (*t == ')') brackets.push_back('('); // ')'
+		if (brackets.is_bracket(*t)) brackets.putback(*t);
+
+		program--;
+		t++;
+	}
+}
+
+
+char Parser::get_escape_char(char* _str) const {
+	switch (*_str) {
+	case 'r': return '\r';
+	case 'n': return '\n';
+	case 'v': return '\v';
+	case 't': return '\t';
+	case 'b': return '\b';
+	case 'f': return '\f';
+	case '0': return '\0';
+	default: return *_str;
+	}
 }
