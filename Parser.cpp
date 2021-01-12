@@ -1,10 +1,6 @@
 #include "Parser.h"
 
 
-bool is_end() {
-	return tok == EOL || tok == FINISHED;
-}
-
 // -------------------------------
 Parser parser;
 
@@ -21,6 +17,9 @@ void Parser::parse(double& result) {
 	if (!token.empty()) {
 		parse_relation_oper(result);
 		putback_token();
+
+		// TODO
+		// exception for strings like "12 5"
 	}
 }
 
@@ -147,8 +146,8 @@ void Parser::parse_brackets(double& result) {
 		read_token();
 		parse_relation_oper(result);
 
-		if (token == "=") throw ParserException(INVALID_SYNTAX);
-		if (token[0] != ')') throw ParserException(EXTRA_BRACKET);
+		if (token == "=") throw Exception(INVALID_SYNTAX);
+		if (token[0] != ')') throw Exception(EXTRA_BRACKET);
 		
 		read_token();
 	}
@@ -167,8 +166,8 @@ void Parser::read_values(double& result) {
 		result = atof(token.c_str());
 		read_token();
 		break;
-	case STRING: throw VariableException(UNDEFINED_NAME);
-	default: throw ParserException(INVALID_SYNTAX);
+	case STRING: throw Exception(UNDEFINED_NAME);
+	default: throw Exception(INVALID_SYNTAX);
 	}
 }
 
@@ -181,65 +180,66 @@ void Parser::read_token() {
 
 	skip_space();
 
-	if (is_eof(program)) token_eof();
-	else if (is_cr(program)) token_cr();
-	else if (is_opers(program)) token_opers();
-	else if (is_delim(program)) token_delim();
-	else if (is_quote(program)) token_quote();
+	if (is_eof(*program)) token_eof();
+	else if (is_cr(*program)) token_cr();
+	else if (is_opers(*program)) token_opers();
+	else if (is_delim(*program)) token_delim();
+	else if (is_quote(*program)) token_quote();
 	else if (is_number(program)) token_number();
-	else if (isalpha(*program)) {
+	else if (is_string(*program)) {
 		token_string();
 
 		if (is_var(token)) token_type = VARIABLE;
-		else if (is_function(token)) token_type = FUNCTION;
+		//else if (is_function(token)) token_type = FUNCTION;
 		else token_type = STRING;
-
-		/*if (is_cmd(token.c_str(), tok)) token_type = COMMAND;
-		else if (is_function(token.c_str(), tok)) 
-			token_type = FUNCTION;
-		else token_type = VARIABLE;*/
 	}
+	else if (brackets.is_brace(*program)) token_brace();
+	else throw Exception(INVALID_SYNTAX);
 }
 
 
-inline bool Parser::is_eof(char* symbol) const {
-	return *symbol == '\0';
+inline bool Parser::is_eof(char symbol) const {
+	return symbol == '\0';
 }
 
-inline bool Parser::is_space(char* symbol) const {
-	return *symbol == ' ' || *symbol == '\t';
+inline bool Parser::is_space(char symbol) const {
+	return symbol == ' ' || symbol == '\t';
 }
 
-inline bool Parser::is_cr(char* symbol) const {
-	return *symbol == '\r';
+inline bool Parser::is_cr(char symbol) const {
+	return symbol == '\r';
 }
 
-inline bool Parser::is_opers(char* symbol) const {
-	return strchr("<!=>", *symbol);
+inline bool Parser::is_opers(char symbol) const {
+	return strchr("<!=>", symbol);
 }
 
-inline bool Parser::is_delim(char* symbol) const {
-	return strchr("+-*^/=;(),", *symbol);
+inline bool Parser::is_delim(char symbol) const {
+	return strchr("+-*^/=;(),", symbol); // {}
 }
 
-inline bool Parser::is_quote(char* symbol) const {
-	return *symbol == '"';
+inline bool Parser::is_quote(char symbol) const {
+	return symbol == '"';
 }
 
 inline bool Parser::is_number(char* str) const {
 	register char* temp = str;
 	register bool fst_digit = false;
 
-	while (*temp && !strchr("+-*^/=;(), \t\r", *temp)) {
+	while (*temp && !iscntrl(*temp) && !is_delim(*temp)) {
 		if (*temp != '.' && !isdigit(*temp)) {
 			if (fst_digit && isalpha(*temp)) 
-				throw ParserException(INVALID_SYNTAX);
+				throw Exception(INVALID_SYNTAX);
 			return false;
 		}
 		temp++;
 		fst_digit = true;
 	}
 	return true;
+}
+
+inline bool Parser::is_string(char s) const {
+	return isalpha(s) || s == '_';
 }
 
 inline bool Parser::is_escape_char(char* str) const {
@@ -260,12 +260,16 @@ inline bool Parser::is_escape_char(char* str) const {
 
 
 inline void Parser::skip_space() {
-	while (is_space(program)) program++;
+	while (is_space(*program)) program++;
 }
 
 bool Parser::is_expression(char symbol) {
 	const char opers[] = { '+','-','/','*','^','>','<', EQ, NE, GE, LE, 0 };
 	return strchr(opers, symbol) && symbol != '\0';
+}
+
+bool Parser::is_end() const {
+	return tok == EOL || tok == FINISHED;
 }
 
 
@@ -317,7 +321,7 @@ void Parser::token_opers() {
 			program += 2;
 			token.push_back(NE);
 		}
-		else throw ParserException(INVALID_SYNTAX);
+		else throw Exception(INVALID_SYNTAX);
 		break;
 	}
 
@@ -325,16 +329,14 @@ void Parser::token_opers() {
 }
 
 void Parser::token_delim() {
-	if (*program == '(') parentheses.push_back('(');
-	else if (*program == ')') {
-		if (parentheses.empty())
-			throw ParserException(EXTRA_BRACKET);
-		parentheses.pop_back();
-	}
+	if (brackets.is_parenthesis(*program))
+		brackets.push(*program);
 	
 	token.push_back(*program);
 	program++;
 	token_type = DELIMITER;
+	/*token_type = (*program == '{' ? OPEN_BRACE :
+		*program == '}' ? CLOSE_BRACE : DELIMITER);*/
 }
 
 void Parser::token_quote() {
@@ -346,30 +348,41 @@ void Parser::token_quote() {
 		}
 		else token.push_back(*program++);
 	}
-	if (*program == '\r') throw ParserException(MISS_QUOTE);
+	if (*program == '\r') throw Exception(MISS_QUOTE);
 	program++;
 	token_type = QUOTE;
 }
 
 void Parser::token_number() {
-	while (!strchr("+-*^/<!=>;(),\r \t", *program))
+	while (isdigit(*program))
 		token.push_back(*program++);
+
+	/*while (!strchr("+-*^/<!=>;(),\r \t", *program))
+		token.push_back(*program++);*/
 	token_type = NUMBER;
 }
 
 void Parser::token_string() {
-	while (!strchr(" \t; ,-+=<!>/*%^()\r\"", *program)) { // Читаем до тех пор пока не встретим разделитель " ; ,+=<>/*%^()"
+	while (isalnum(*program) || *program == '_')
 		token.push_back(*program++);
-	}
+}
+
+void Parser::token_brace() {
+	if (brackets.is_parenthesis(*program))
+		brackets.push(*program);
+	token.push_back(*program++);
+	token_type = COMMAND;
 }
 
 
 void Parser::putback_token() {
 	const char* t = token.c_str();
 	while (*t) {
-		if (*t == '(' && !parentheses.empty()) 
-			parentheses.pop_back();
-		else if (*t == ')') parentheses.push_back('('); // ')'
+		//if (*t == '(' && !brackets.empty()) 
+		//	brackets.pop_back();
+		//else if (*t == ')') brackets.push_back('('); // ')'
+		if (brackets.is_bracket(*t)) brackets.putback(*t);
+
 		program--;
 		t++;
 	}

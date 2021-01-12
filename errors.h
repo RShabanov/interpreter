@@ -1,5 +1,4 @@
 #pragma once
-#include "service_vars.h"
 
 
 enum error_types {
@@ -36,6 +35,3 @@ static const char* errors[]{
 	"already defined name.",
 	"defining variable without being initialized."
 };
-
-
-int get_error_line();

@@ -1,9 +1,6 @@
 #pragma once
 #include <string>
-#include <vector>
 
-
-extern std::vector<char> parentheses;
 
 extern char* program, *prog_start;
 

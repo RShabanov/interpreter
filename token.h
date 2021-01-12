@@ -8,9 +8,7 @@ enum token_types {
 	FUNCTION,
 	COMMAND, 
 	QUOTE, 
-	DELIMITER,
-	OPEN_PARENTHESIS,
-	CLOSE_PARENTHESIS,
+	DELIMITER
 };
 
 enum tokens {
@@ -21,10 +19,10 @@ enum tokens {
 	ELIF,
 	WHILE, 
 	FOR,
-	FUN, 
+	FUN,
+	OPEN_BRACE,
+	CLOSE_BRACE,
 	LET,
-	COLON,
-	END, 
 	RETURN, 
 	FINISHED, 
 	EOL

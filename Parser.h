@@ -5,23 +5,20 @@
 #include <string>
 #include <cmath>
 #include "token.h"
-#include "ParserException.h"
+#include "brackets.h"
 #include "variables.h"
-#include "service_vars.h"
-
-
-bool is_end();
 
 
 class Parser {
 
-	bool is_cr(char*) const; // carriage return
-	bool is_eof(char*) const;
-	bool is_space(char*) const;
-	bool is_opers(char*) const;
-	bool is_delim(char*) const;
-	bool is_quote(char*) const;
+	bool is_cr(char) const; // carriage return
+	bool is_eof(char) const;
+	bool is_space(char) const;
+	bool is_opers(char) const;
+	bool is_delim(char) const;
+	bool is_quote(char) const;
 	bool is_number(char*) const;
+	bool is_string(char) const;
 	bool is_escape_char(char*) const;
 
 	void token_eof();
@@ -31,6 +28,7 @@ class Parser {
 	void token_quote();
 	void token_number();
 	void token_string();
+	void token_brace();
 
 	void parse_brackets(double& result); // парсинг скобок ()
 	void parse_unary(double& result); // парсинг унарных операций
@@ -40,7 +38,6 @@ class Parser {
 	void parse_relation_oper(double& result); // парсинг реляционных выражений
 
 	void read_values(double& result);
-
 	void skip_space();
 
 	char get_escape_char(char* _str) const;
@@ -48,13 +45,13 @@ class Parser {
 public:
 	Parser();
 	~Parser();
-
+	
+	bool is_end() const;
 	bool is_expression(char);
 
 	void read_token();
 	void putback_token();
 	void parse(double& result);
-
 };
 
 extern Parser parser;
