@@ -15,7 +15,9 @@ enum error_types {
 	EXTRA_BRACKET,
 	UNDEFINED_NAME,
 	ALREADY_DEFINED,
-	NOT_INITIALIZED
+	NOT_INITIALIZED,
+	NOT_OPEN_FILE,
+	BAD_FILE
 };
 
 
@@ -33,5 +35,7 @@ static const char* errors[]{
 	"extra bracket.",
 	"undefined name.",
 	"already defined name.",
-	"defining variable without being initialized."
+	"defining variable without being initialized.",
+	"file cannot be opened.",
+	"cannot read file properly."
 };

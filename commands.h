@@ -7,16 +7,14 @@
 
 
 
-void assign_variable();
-double compute_exp();
-
-
 class Cmd {
 	std::set<int> return_cmd;
 	std::map<std::string, int> cmd_table;
 
 	void define_variable();
 	void out_string(std::string&);
+
+	void del_vars(std::multimap<std::string, double>&);
 
 	void cmd_print();
 	void cmd_input();
@@ -27,7 +25,6 @@ class Cmd {
 	void cmd_for();
 	void cmd_fun();
 	void cmd_open_brace();
-	void cmd_close_brace();
 	void cmd_let();
 	void cmd_return();
 public:
@@ -57,6 +54,7 @@ class Function {
 
 	std::multimap<std::string, Fun> funs;
 
+	friend class Cmd;
 public:
 	Function();
 	~Function();
@@ -69,3 +67,20 @@ public:
 	void execute(std::string&) const;
 };
 extern Function fun;
+
+
+
+class Executive {
+	void read_exp(std::string&) const;
+	void eval_var() const;
+
+	bool not_executive() const;
+
+	double get_value() const;
+public:
+	void eval(const char*);
+	void assign_variable() const;
+	double compute_exp() const;
+
+};
+extern Executive exec;

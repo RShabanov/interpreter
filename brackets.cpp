@@ -48,6 +48,10 @@ size_t Brackets::braces_size() const {
 	return braces_amt;
 }
 
+size_t Brackets::parenthesis_size() const {
+	return brs.size() - braces_amt;
+}
+
 size_t Brackets::size() const {
 	return brs.size();
 }
@@ -62,7 +66,7 @@ bool Brackets::empty() const {
 }
 
 bool Brackets::is_parenthesis(char symbol) const {
-	return strchr("(){}", symbol);
+	return strchr("()", symbol);
 }
 
 bool Brackets::is_brace(char symbol) const {

@@ -1,16 +1,30 @@
 #include <iostream>
-#include <iterator>
+//#include <iterator>
+#include <memory>
+#include <iomanip>
 #include "Parser.h"
 #include "scanner.h"
-using namespace std;
 
 
-int main() {
+int main(int argc, char* argv[]) {
+	using namespace std;
 
 	Scanner scanner;
+
+	//scanner.run("test.txt");
 	scanner.run();
 
+	/*if (argc > 1) {
+		for (int i = 1; i < argc; i++) {
+			cout << "--------------------------" << endl;
+			cout << argv[i] << endl << endl;
+			scanner.run(argv[i]);
+		}
+	}
+	else {
+		in = &cin;
+		scanner.run();
+	}*/
 
-	//cin.get();
 	return 0;
 }
