@@ -129,11 +129,51 @@ void Cmd::cmd_let() {
 	}
 }
 
-void Cmd::cmd_if() {}
-void Cmd::cmd_else() {}
-void Cmd::cmd_elif() {}
-void Cmd::cmd_while() {}
-void Cmd::cmd_for() {}
+void Cmd::cmd_if() {
+	// if condition { ... }
+	
+	bool condition = exec.compute_exp();
+	parser.read_token();
+	
+	if (token[0] == '{') {
+		if (condition) {
+			exec.eval(program);
+			skip_rest_conditional();
+		}
+		else {
+			parser.putback_token();
+			tok = IF;
+			skip_if();
+		}
+	}
+	else throw Exception(INVALID_SYNTAX);
+}
+
+void Cmd::cmd_elif() {
+	// elif condition { ... }
+	if (tok == IF) cmd_if();
+	else throw Exception(INVALID_SYNTAX);
+}
+
+void Cmd::cmd_else() {
+	// else condition { ... }
+	if (tok == IF) {
+		parser.read_token();
+
+		if (token[0] == '{') exec.eval(program);
+		else throw Exception(INVALID_SYNTAX);
+	}
+	else throw Exception(INVALID_SYNTAX);
+}
+
+
+void Cmd::cmd_while() {
+	// while condition { ... }
+}
+
+void Cmd::cmd_for() {
+	// for let i : range(start, stop, step) { ... }
+}
 
 void Cmd::cmd_fun() {
 	parser.read_token();
@@ -267,18 +307,44 @@ void Cmd::get_fun_body(std::string& body) {
 
 	if (token[0] == '{') {
 		parser.putback_token();
-		register int braces = 0;
+		register auto braces = brackets.braces_size();
 		do {
 			parser.read_token();
-			if (token[0] == '{') braces++;
-			else if (token[0] == '}') braces--;
-
 			if (token_type == QUOTE)
 				token = '"' + token + '"';
 			body += " " + token;
-		} while (braces > 0);
+		} while (!parser.is_eof() &&
+			braces != brackets.braces_size());
+
+		if (braces != brackets.braces_size())
+			throw Exception(EXTRA_BRACKET);
 	}
 	else throw Exception(EXTRA_BRACKET);
+}
+
+void Cmd::skip_if() {
+	exec.compute_exp();
+	register auto braces = brackets.braces_size();
+	do {
+		parser.read_token();
+	} while (!parser.is_eof() && 
+		braces != brackets.braces_size());
+
+	if (braces != brackets.braces_size())
+		throw Exception(EXTRA_BRACKET);
+}
+
+void Cmd::skip_rest_conditional() {
+	do {
+		parser.read_token();
+		if (parser.is_eol()) continue;
+	} while (!parser.is_eof() && token_type != STRING);
+
+	if (is_cmd(token, tok) && (tok == ELIF || tok == ELSE)) {
+		skip_if();
+		skip_rest_conditional();
+	}
+	else parser.putback_token();
 }
 
 
@@ -384,7 +450,7 @@ void Function::exec_fun(std::vector<double>& values) {
 		add_fun_vars(values);
 		do {
 			parser.read_token();
-		} while (token[0] == '\r');
+		} while (tok == EOL);
 
 		if (token[0] == '{') exec.eval(program);
 		else throw Exception(EXTRA_BRACKET);
@@ -455,6 +521,10 @@ void Function::read_param_value(std::vector<double>& values) {
 }
 
 
+
+
+
+
 //////////////////////////////////////////
 //////////////////////////////////////////
 /////////////				//////////////
@@ -465,7 +535,7 @@ void Executive::eval(const char* _code) {
 	// отвечает за участок кода, расположенный в { ... },
 	// или в глобальной области ????
 
-	register char* temp = program;
+	//register char* temp = program;
 	program = const_cast<char*>(_code);
 	// убрать temp
 
@@ -493,10 +563,10 @@ void Executive::eval(const char* _code) {
 		} while (!parser.is_eof() && tok != RETURN);
 	}
 	catch (Exception& e) {
-		program = temp;
+		//program = temp;
 		throw e;
 	}
-	program = temp;
+	//program = temp;
 }
 
 
@@ -569,7 +639,10 @@ void Executive::read_exp(std::string& exp) const {
 	while (true) {
 		parser.read_token();
 
-		if (not_executive()) exp += token;
+		if (not_executive()) {
+			invert_opers();
+			exp += token;
+		}
 		else if (cmd.is_cmd(token, tok)) {
 			if (cmd.is_return_cmd(tok)) {
 				if (tok == RETURN) throw Exception(INVALID_SYNTAX);
@@ -584,7 +657,7 @@ void Executive::read_exp(std::string& exp) const {
 				exp += token;
 			else throw Exception(INVALID_TYPE);
 		}
-		else if (token_type == STRING) 
+		else if (token_type == STRING)
 			// for good exception explanation
 			throw Exception(UNDEFINED_NAME);
 		else break;
@@ -634,4 +707,21 @@ void Executive::eval_var() const {
 	else do {
 		exec.assign_variable();
 	} while (!parser.is_end());
+}
+
+void Executive::invert_opers() const {
+	switch (token[0]) {
+	case EQ:
+		token = "==";
+		break;
+	case NE:
+		token = "!=";
+		break;
+	case GE:
+		token = ">=";
+		break;
+	case LE:
+		token = "<=";
+		break;
+	}
 }

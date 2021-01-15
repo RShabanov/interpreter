@@ -17,6 +17,9 @@ class Cmd {
 	int get_params_cnt();
 	void get_fun_body(std::string&);
 
+	void skip_if();
+	void skip_rest_conditional();
+
 	void cmd_print();
 	void cmd_input();
 	void cmd_if();
@@ -82,6 +85,7 @@ extern Function fun;
 class Executive {
 	void read_exp(std::string&) const;
 	void eval_var() const;
+	void invert_opers() const; // opers from token.h
 
 	bool not_executive() const;
 

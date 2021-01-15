@@ -1,0 +1,8 @@
+fun voo() {
+	print("voo")
+	let a = 5
+	let b = 3
+	print("a:", a)
+	print("b:", b)
+}
+voo()

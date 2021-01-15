@@ -177,11 +177,7 @@ void Parser::read_token() {
 	token_type = 0;
 	tok = 0;
 
-	skip_space(); // добавить сюда экранированные символы
-
-	// TODO
-	// переписать функции с escape_chars
-	// или убрать совсем <--
+	skip_space(); // добавить сюда экранированные символы ???
 
 	if (is_eof(*program)) token_eof();
 	else if (is_cr(*program)) token_cr();
@@ -195,7 +191,6 @@ void Parser::read_token() {
 		if (var.is_var(token)) token_type = VARIABLE;
 		else token_type = STRING;
 	}
-	//else if (brackets.is_brace(*program)) token_brace();
 	else throw Exception(INVALID_SYNTAX);
 }
 
@@ -253,6 +248,7 @@ inline bool Parser::is_escape_char(char* str) const {
 		case 'b':
 		case 'f':
 		case '0':
+		case '\"':
 			return true;
 		}
 	return false;
@@ -399,6 +395,7 @@ char Parser::get_escape_char(char* _str) const {
 	case 'b': return '\b';
 	case 'f': return '\f';
 	case '0': return '\0';
+	case '\"': return '\"';
 	default: return *_str;
 	}
 }

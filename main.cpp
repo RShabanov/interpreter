@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
 
 	Scanner scanner;
 
-	scanner.run("test_fun_b.txt");
+	scanner.run("./tests/test_if_1.txt");
 	//scanner.run();
 
 	/*if (argc > 1) {
