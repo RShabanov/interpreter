@@ -1,7 +1,4 @@
 #include <iostream>
-//#include <iterator>
-#include <memory>
-#include <iomanip>
 #include "Parser.h"
 #include "scanner.h"
 
@@ -11,8 +8,8 @@ int main(int argc, char* argv[]) {
 
 	Scanner scanner;
 
-	//scanner.run("test.txt");
-	scanner.run();
+	scanner.run("./tests/test_if_1.txt");
+	//scanner.run();
 
 	/*if (argc > 1) {
 		for (int i = 1; i < argc; i++) {

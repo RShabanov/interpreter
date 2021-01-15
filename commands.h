@@ -14,7 +14,11 @@ class Cmd {
 	void define_variable();
 	void out_string(std::string&);
 
-	void del_vars(std::multimap<std::string, double>&);
+	int get_params_cnt();
+	void get_fun_body(std::string&);
+
+	void skip_if();
+	void skip_rest_conditional();
 
 	void cmd_print();
 	void cmd_input();
@@ -24,7 +28,6 @@ class Cmd {
 	void cmd_while();
 	void cmd_for();
 	void cmd_fun();
-	void cmd_open_brace();
 	void cmd_let();
 	void cmd_return();
 public:
@@ -48,23 +51,32 @@ class Function {
 
 	struct Fun {
 		std::string body;
-		int args = 0;
-		bool return_type = false;
+		int argc = 0;
+		Fun(std::string& _body, int _argc) 
+			: body(std::move(_body)) {
+			argc = _argc;
+		}
 	};
 
 	std::multimap<std::string, Fun> funs;
+
+	int check_params();
+	void read_param_value(std::vector<double>&);
+	void exec_fun(std::vector<double>&);
+	void add_fun_vars(std::vector<double>&);
+	void del_fun_vars(std::multimap<std::string, double>&);
 
 	friend class Cmd;
 public:
 	Function();
 	~Function();
 
-	bool is_fun(const std::string&) const;
-	bool is_return_fun(const std::string&) const;
+	bool is_fun(const std::string&);
 
-	void add_fun(const char*);
-	void delete_fun(std::string&);
-	void execute(std::string&) const;
+	void add_fun(const std::string& _name, 
+		std::string& _body, int _argc);
+	void delete_fun(const std::string&);
+	void execute(const std::string&);
 };
 extern Function fun;
 
@@ -73,6 +85,7 @@ extern Function fun;
 class Executive {
 	void read_exp(std::string&) const;
 	void eval_var() const;
+	void invert_opers() const; // opers from token.h
 
 	bool not_executive() const;
 

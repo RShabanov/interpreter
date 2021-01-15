@@ -8,7 +8,7 @@
 class Var {
 	std::multimap<std::string, double> vars;
 
-	friend class Cmd;
+	friend class Function;
 public:
 	Var();
 	~Var();

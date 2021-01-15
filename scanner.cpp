@@ -31,6 +31,9 @@ void Scanner::run() {
 	std::string line, str;
 	double res = 0;
 	
+	cout << "This variant (real-time) of interpreter is still on work" << endl
+		<< "That's why something can work otherwise or strange" << endl
+		<< endl;
 	cout << "> ";
 
 	// TODO
@@ -97,32 +100,8 @@ void Scanner::run(const char* filename) {
 		read_file(filename, code);
 
 		reset(code.c_str());
-		//std::cout << program << std::endl;
 
-		do {
-			parser.read_token();
-
-			if (parser.is_eol()) continue;
-			if (parser.is_eof()) break;
-			if (token_type == QUOTE)
-				std::cout << token << std::endl;
-			else if (token_type == VARIABLE)
-				token_variable();
-			else if (token_type == FUNCTION) {
-				// function_act
-			}
-			else if (cmd.is_cmd(token, tok)) {
-				if (cmd.is_return_cmd(tok)) {
-					parser.putback_token();
-					token_expression();
-				}
-				else cmd.execute(tok);
-			}
-			else {
-				parser.putback_token();
-				token_expression();
-			}
-		} while (true);
+		exec.eval(program);
 	}
 	catch (Exception& e) {
 		std::cerr << e.what() << std::endl;
@@ -181,10 +160,12 @@ void Scanner::token_variable() const {
 
 	if (parser.is_expression(token[0]) || parser.is_end()) // %
 		token_expression();
-	else do {
-		exec.assign_variable();
-		//parser.read_token();
-	} while (!parser.is_end());
+	else if (token[0] == '=')
+		do {
+			exec.assign_variable();
+			//parser.read_token();
+		} while (!parser.is_end());
+	else throw Exception(INVALID_SYNTAX);
 }
 
 

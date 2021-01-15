@@ -29,7 +29,10 @@ void Brackets::putback(char br) {
 	if (is_open_bracket(br)) {
 		if (brs.empty() || br != brs.back())
 			throw Exception(UNKNOWN_ERROR);
-		else brs.pop_back();
+		else {
+			if (br == '{') braces_amt--;
+			brs.pop_back();
+		}
 	}
 	else if (br == ')') brs.push_back('(');
 	else if (br == '}') {

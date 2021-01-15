@@ -166,7 +166,7 @@ void Parser::read_values(double& result) {
 	}
 
 	read_token();
-	if (token_type != DELIMITER) // {} !!!
+	if (token_type != DELIMITER)
 		throw Exception(INVALID_SYNTAX);
 }
 
@@ -177,11 +177,7 @@ void Parser::read_token() {
 	token_type = 0;
 	tok = 0;
 
-	skip_space(); // добавить сюда экранированные символы
-
-	// TODO
-	// переписать функции с escape_chars
-	// или убрать совсем <--
+	skip_space(); // добавить сюда экранированные символы ???
 
 	if (is_eof(*program)) token_eof();
 	else if (is_cr(*program)) token_cr();
@@ -195,7 +191,6 @@ void Parser::read_token() {
 		if (var.is_var(token)) token_type = VARIABLE;
 		else token_type = STRING;
 	}
-	else if (brackets.is_brace(*program)) token_brace();
 	else throw Exception(INVALID_SYNTAX);
 }
 
@@ -217,7 +212,7 @@ inline bool Parser::is_opers(char symbol) const {
 }
 
 inline bool Parser::is_delim(char symbol) const {
-	return strchr("+-*^/=;(),", symbol);
+	return strchr("+-*^/=;(){},", symbol);
 }
 
 inline bool Parser::is_quote(char symbol) const {
@@ -253,6 +248,7 @@ inline bool Parser::is_escape_char(char* str) const {
 		case 'b':
 		case 'f':
 		case '0':
+		case '\"':
 			return true;
 		}
 	return false;
@@ -336,7 +332,7 @@ void Parser::token_opers() {
 }
 
 void Parser::token_delim() {
-	if (brackets.is_parenthesis(*program))
+	if (brackets.is_bracket(*program))
 		brackets.push(*program);
 	
 	token.push_back(*program);
@@ -370,13 +366,13 @@ void Parser::token_string() {
 		token.push_back(*program++);
 }
 
-void Parser::token_brace() {
-	if (brackets.is_brace(*program))
-		brackets.push(*program);
-	tok = *program == '{' ? OPEN_BRACE : CLOSE_BRACE;
-	token.push_back(*program++);
-	token_type = COMMAND;
-}
+//void Parser::token_brace() {
+//	if (brackets.is_brace(*program))
+//		brackets.push(*program);
+//	tok = *program == '{' ? OPEN_BRACE : CLOSE_BRACE;
+//	token.push_back(*program++);
+//	token_type = COMMAND;
+//}
 
 
 void Parser::putback_token() {
@@ -399,6 +395,7 @@ char Parser::get_escape_char(char* _str) const {
 	case 'b': return '\b';
 	case 'f': return '\f';
 	case '0': return '\0';
+	case '\"': return '\"';
 	default: return *_str;
 	}
 }
