@@ -1,6 +1,0 @@
-fun voo(let a) {
-	print("voo")
-	return input()
-	print("end of voo")
-}
-print("voo(return 5) - 2:", voo(return 5) - 2)
