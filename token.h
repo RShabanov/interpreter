@@ -20,8 +20,6 @@ enum tokens {
 	WHILE, 
 	FOR,
 	FUN,
-	OPEN_BRACE,
-	CLOSE_BRACE,
 	LET,
 	RETURN, 
 	FINISHED, 

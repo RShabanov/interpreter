@@ -29,7 +29,10 @@ void Brackets::putback(char br) {
 	if (is_open_bracket(br)) {
 		if (brs.empty() || br != brs.back())
 			throw Exception(UNKNOWN_ERROR);
-		else brs.pop_back();
+		else {
+			if (br == '{') braces_amt--;
+			brs.pop_back();
+		}
 	}
 	else if (br == ')') brs.push_back('(');
 	else if (br == '}') {
@@ -48,6 +51,10 @@ size_t Brackets::braces_size() const {
 	return braces_amt;
 }
 
+size_t Brackets::parenthesis_size() const {
+	return brs.size() - braces_amt;
+}
+
 size_t Brackets::size() const {
 	return brs.size();
 }
@@ -62,7 +69,7 @@ bool Brackets::empty() const {
 }
 
 bool Brackets::is_parenthesis(char symbol) const {
-	return strchr("(){}", symbol);
+	return strchr("()", symbol);
 }
 
 bool Brackets::is_brace(char symbol) const {

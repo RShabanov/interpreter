@@ -15,8 +15,10 @@ public:
 	Brackets();
 	~Brackets();
 
-	size_t braces_size() const;
 	size_t size() const;
+	size_t braces_size() const;
+	size_t parenthesis_size() const;
+
 	char back() const;
 
 	void clear();

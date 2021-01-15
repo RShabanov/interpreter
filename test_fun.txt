@@ -1,0 +1,33 @@
+fun foo(let a, b) {
+	print("foo")
+	print("a:\t", a)
+	print("b:\t", b)
+	print("a - b =", a - b)
+}
+
+fun boo(let a) {
+	print("boo")
+	let b = input("Enter b: ")
+	print("a:\t", a)
+	print("b:\t", b)
+	print("a - b =", a - b)}
+
+fun voo() {
+	print("voo")
+	return input()
+	print("end of voo")
+}
+
+foo(5, 6)
+print()
+
+boo(10)
+print()
+
+print(voo())
+print()
+
+print("voo() - 2:", voo() - 2)
+print()
+
+print("Var a:", a)

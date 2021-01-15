@@ -47,6 +47,8 @@ public:
 	~Parser();
 	
 	bool is_end() const;
+	bool is_eof() const;
+	bool is_eol() const;
 	bool is_expression(char);
 
 	void read_token();
