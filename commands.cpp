@@ -2,9 +2,7 @@
 
 
 
-Cmd cmd;
 Executive exec;
-Function fun;
 // ----------------------------------
 
 Cmd::Cmd() : return_cmd{ INPUT, RETURN },
@@ -142,8 +140,9 @@ void Cmd::cmd_if() {
 		}
 		else {
 			parser.putback_token();
-			tok = IF;
-			skip_if();
+			skip_if();			
+			// to continue in the following branch if there is
+			following_branch();
 		}
 	}
 	else throw Exception(INVALID_SYNTAX);
@@ -337,7 +336,7 @@ void Cmd::skip_if() {
 void Cmd::skip_rest_conditional() {
 	do {
 		parser.read_token();
-		if (parser.is_eol()) continue;
+		//if (parser.is_eol()) continue;
 	} while (!parser.is_eof() && token_type != STRING);
 
 	if (is_cmd(token, tok) && (tok == ELIF || tok == ELSE)) {
@@ -347,179 +346,24 @@ void Cmd::skip_rest_conditional() {
 	else parser.putback_token();
 }
 
-
-
-//////////////////////////////////////////
-//////////////////////////////////////////
-/////////////				//////////////
-/////////////	FUNCTIONS	//////////////
-/////////						//////////
-
-Function::Function() : funs() {}
-
-Function::~Function() {}
-
-
-bool Function::is_fun(const std::string& key) {
-	// проверяет, есть ли такая функция
-	// с таким же именем и числом параметров
-
-	auto range = funs.equal_range(key);
-
-	if (range.first != range.second) {
-		int argc = check_params();
-		auto it = range.first;
-		for (it; it != range.second; it++)
-			if (it->second.argc == argc) {
-				token = it->first;
-				token_type = FUNCTION;
-				return true;
-			}
-		it--;
-
-		throw Exception(it->second.argc > argc ?
-			NOT_ENOUGH_PARAMS : TOO_MANY_PARAMS);
-	}
-	return false;
-}
-
-int  Function::check_params() {
-	register char* temp = program;
-	parser.read_token();
-	if (token[0] == '(') {
-		int cnt = 0;
+void Cmd::following_branch() {
+	do {
 		parser.read_token();
-		if (token[0] != ')') {
-			parser.putback_token();
-			cnt++;
-			do {
-				parser.read_token();
-				if (token[0] == ',') cnt++;
-			} while (token[0] != ')');
+	} while (!parser.is_eof() && token_type != STRING);
+
+	if (is_cmd(token, tok)) {
+		if (tok == ELIF) {
+			tok = IF;
+			cmd_elif();
 		}
-		program = temp;
-		return cnt;
-	}
-	else throw Exception(INVALID_SYNTAX);
-}
-
-
-void Function::add_fun(const std::string& _name,
-	std::string& _body, int _argc) {
-	funs.insert({ _name, Fun(_body, _argc) });
-}
-
-void Function::delete_fun(const std::string& key) {
-	auto it = --funs.equal_range(key).second;
-	if (it != funs.end())
-		funs.erase(it);
-	else throw Exception(UNKNOWN_ERROR);
-}
-
-void Function::execute(const std::string& key) {
-	auto range = funs.equal_range(key);
-	if (range.first != range.second) {
-		std::vector<double> values;
-		read_param_value(values);
-
-		for (auto it = range.first; it != range.second; it++)
-			if (it->second.argc == values.size()) {
-				register char* temp = program;
-
-				try {
-					program = const_cast<char*>(it->second.body.c_str());
-					exec_fun(values);
-					program = temp;
-					return;
-				}
-				catch (Exception& e) {
-					program = temp;
-					throw e;
-				}
-			}
-		throw Exception(UNDEFINED_NAME);
-	}
-	else throw Exception(UNDEFINED_NAME);
-}
-
-void Function::exec_fun(std::vector<double>& values) {
-	auto vars(var.vars);
-	auto temp_funs(funs);
-
-	try {
-		add_fun_vars(values);
-		do {
-			parser.read_token();
-		} while (tok == EOL);
-
-		if (token[0] == '{') exec.eval(program);
-		else throw Exception(EXTRA_BRACKET);
-
-		funs = temp_funs;
-		del_fun_vars(vars);
-		tok = RETURN;
-	}
-	catch (Exception& e) {
-		var.vars = vars;
-		funs = temp_funs;
-		throw e;
-	}
-}
-
-void Function::add_fun_vars(std::vector<double>& values) {
-	// сопоставляет переменные со значениями
-	// (let a, b, c)
-	// (	1, 2, 3), e.g.
-	// т.к. проверка на корректность формы
-	// происходит перед данной функцией,
-	// то здесь ее можно опустить
-	
-	parser.read_token(); // skip '('
-	parser.read_token(); // skip "let" if it is
-	if (token[0] == ')') return;
-
-	for (int i = 0; i < values.size(); i++) {
-		parser.read_token();
-		var.create_var(token, values.at(i));
-
-		parser.read_token(); // read ',' or ')';
-	}
-}
-
-void Function::del_fun_vars(std::multimap<std::string, double>& vars) {
-	std::vector<std::string> var_name;
-	for (auto it : var.vars) var_name.push_back(it.first);
-
-	for (auto name : var_name) {
-		auto range = var.vars.equal_range(name);
-		auto vars_range = vars.equal_range(name);
-
-		for (auto i = range.first, vi = vars_range.first;
-			vi != vars_range.second && i != range.second;
-			i++, vi++) {
-			vi->second = i->second;
+		else if (tok == ELSE) {
+			tok = IF;
+			cmd_else();
 		}
+		else parser.putback_token();
 	}
-	var.vars = vars;
+	else parser.putback_token();
 }
-
-void Function::read_param_value(std::vector<double>& values) {
-	parser.read_token();
-	if (token[0] == '(') {
-		register double val;
-		do {
-			val = exec.compute_exp();
-			parser.read_token();
-			if (std::isnan(val)) {
-				if (token[0] == ')') break;
-				else throw Exception(INVALID_TYPE);
-			}
-			values.push_back(val);
-		} while (token[0] == ',');
-	}
-	else throw Exception(EXTRA_BRACKET);
-}
-
 
 
 
@@ -535,38 +379,30 @@ void Executive::eval(const char* _code) {
 	// отвечает за участок кода, расположенный в { ... },
 	// или в глобальной области ????
 
-	//register char* temp = program;
 	program = const_cast<char*>(_code);
-	// убрать temp
 
-	try {
-		do {
+	do {
+		parser.read_token();
+
+		if (parser.is_eol() || token_type == QUOTE) continue;
+		if (token[0] == '}' && !brackets.braces_size() ||
+			parser.is_eof() || tok == RETURN || !*program) 
+			break;
+
+		if (token_type == VARIABLE) eval_var();
+		else if (fun.is_fun(token)) {
+			execute_fun(token);
+			if (*program) tok = 0;
+		}
+		else if (cmd.is_cmd(token, tok)) cmd.execute(tok);
+		else {
+			parser.putback_token();
+			register double res = exec.compute_exp();
 			parser.read_token();
 
-			if (parser.is_eol() || token_type == QUOTE) continue;
-			if (token[0] == '}' && !brackets.braces_size() ||
-				parser.is_eof() || tok == RETURN) break;
-
-			if (token_type == VARIABLE) eval_var();
-			else if (fun.is_fun(token)) {
-				fun.execute(token);
-				if (*program) tok = 0;
-			}
-			else if (cmd.is_cmd(token, tok)) cmd.execute(tok);
-			else {
-				parser.putback_token();
-				register double res = exec.compute_exp();
-				parser.read_token();
-
-				if (!parser.is_end()) throw Exception(INVALID_SYNTAX);
-			}
-		} while (!parser.is_eof() && tok != RETURN);
-	}
-	catch (Exception& e) {
-		//program = temp;
-		throw e;
-	}
-	//program = temp;
+			if (!parser.is_end()) throw Exception(INVALID_SYNTAX);
+		}
+	} while (!parser.is_eof() && tok != RETURN);
 }
 
 
@@ -640,7 +476,7 @@ void Executive::read_exp(std::string& exp) const {
 		parser.read_token();
 
 		if (not_executive()) {
-			invert_opers();
+			if (token_type == DELIMITER) invert_opers();
 			exp += token;
 		}
 		else if (cmd.is_cmd(token, tok)) {
@@ -652,7 +488,7 @@ void Executive::read_exp(std::string& exp) const {
 			else throw Exception(INVALID_TYPE);
 		}
 		else if (fun.is_fun(token)) {
-			fun.execute(token);
+			execute_fun(token);
 			if (isdigit(token[0]) || strchr("-+", token[0])) 
 				exp += token;
 			else throw Exception(INVALID_TYPE);
@@ -724,4 +560,107 @@ void Executive::invert_opers() const {
 		token = "<=";
 		break;
 	}
+}
+
+
+
+
+
+
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+/////////////				//////////////
+/////////////	FunFunctor	//////////////
+/////////						//////////
+
+void FunFunctor::operator()(const std::string& key) {
+	auto range = fun.funs.equal_range(key);
+	if (range.first != range.second) {
+		std::vector<double> values;
+		read_param_value(values);
+
+		for (auto it = range.first; it != range.second; it++)
+			if (it->second.argc == values.size()) {
+				register char* temp = program;
+
+				try {
+					program = const_cast<char*>(it->second.body.c_str());
+					execute(values);
+					program = temp;
+					return;
+				}
+				catch (Exception& e) {
+					program = temp;
+					throw e;
+				}
+			}
+		throw Exception(UNDEFINED_NAME);
+	}
+	else throw Exception(UNDEFINED_NAME);
+}
+
+void FunFunctor::execute(std::vector<double>& values) {
+	std::multimap<std::string, double> vars;
+	var.copy_to(vars);
+
+	auto temp_funs(fun.funs);
+
+	try {
+		add_fun_vars(values);
+		do {
+			parser.read_token();
+		} while (parser.is_eol());
+
+		if (token[0] == '{') exec.eval(program);
+		else throw Exception(EXTRA_BRACKET);
+
+		// TODO
+		// восстанавливать функции нужно осторожно
+		fun.funs = temp_funs;
+		var.restore_with_changes(vars);
+		tok = RETURN;
+	}
+	catch (Exception& e) {
+		var.restore(vars);
+		fun.funs = temp_funs;
+		throw e;
+	}
+}
+
+void FunFunctor::add_fun_vars(std::vector<double>& values) {
+	// сопоставляет переменные со значениями
+	// (let a, b, c)
+	// (	1, 2, 3), e.g.
+	// т.к. проверка на корректность формы
+	// происходит перед данной функцией,
+	// то здесь ее можно опустить
+
+	parser.read_token(); // skip '('
+	parser.read_token(); // skip "let" if it is
+	if (token[0] == ')') return;
+
+	for (size_t i = 0; i < values.size(); i++) {
+		parser.read_token();
+		var.create_var(token, values.at(i));
+
+		parser.read_token(); // read ',' or ')';
+	}
+}
+
+void FunFunctor::read_param_value(std::vector<double>& values) {
+	parser.read_token();
+	if (token[0] == '(') {
+		register double val;
+		do {
+			val = exec.compute_exp();
+			parser.read_token();
+			if (std::isnan(val)) {
+				if (token[0] == ')') break;
+				else throw Exception(INVALID_TYPE);
+			}
+			values.push_back(val);
+		} while (token[0] == ',');
+	}
+	else throw Exception(EXTRA_BRACKET);
 }

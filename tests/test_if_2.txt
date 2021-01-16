@@ -1,0 +1,18 @@
+let a = 5, b = 3
+print("a:", a)
+print("b:", b)
+
+if a > b {
+	let c = a
+	print("a > b")
+}
+elif a == b {
+	let c = a
+	print("a == b")
+}
+else {
+	let c = b
+	print("b < a")
+}
+
+print("c:", c)

@@ -34,3 +34,30 @@ void Var::delete_var(const std::string& key) {
 		vars.erase(it);
 	else throw Exception(UNKNOWN_ERROR);
 }
+
+
+void Var::restore_with_changes(std::multimap<std::string, double>& _vars) {
+	std::set<std::string> var_name;
+	for (auto it : vars) var_name.insert(it.first);
+
+	for (auto name : var_name) {
+		auto range = vars.equal_range(name);
+		auto vars_range = _vars.equal_range(name);
+
+		for (auto i = range.first, vi = vars_range.first;
+			vi != vars_range.second && i != range.second;
+			i++, vi++) {
+			vi->second = i->second;
+		}
+	}
+	vars = _vars;
+}
+
+
+void Var::restore(std::multimap<std::string, double>& _vars) {
+	vars = _vars;
+}
+
+void Var::copy_to(std::multimap<std::string, double>& target) {
+	target = vars;
+}

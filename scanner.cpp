@@ -112,6 +112,7 @@ void Scanner::run(const char* filename) {
 			<< "Run-time error.\n";
 		brackets.clear();
 	}
+	std::cout << std::flush;
 	std::cin.get();
 }
 

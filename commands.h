@@ -4,10 +4,11 @@
 #include <set>
 #include "token.h"
 #include "Parser.h"
+#include "Function.h"
 
 
 
-class Cmd {
+static class Cmd {
 	std::set<int> return_cmd;
 	std::map<std::string, int> cmd_table;
 
@@ -19,6 +20,7 @@ class Cmd {
 
 	void skip_if();
 	void skip_rest_conditional();
+	void following_branch();
 
 	void cmd_print();
 	void cmd_input();
@@ -38,47 +40,7 @@ public:
 	bool is_cmd(const std::string& _cmd, int& pos);
 	
 	void execute(int cmd_token);
-};
-extern Cmd cmd;
-
-
-class Function {
-
-	// fun function_name(let var1, var2, ...) {
-	//		... function_body
-	//		[return]
-	// }
-
-	struct Fun {
-		std::string body;
-		int argc = 0;
-		Fun(std::string& _body, int _argc) 
-			: body(std::move(_body)) {
-			argc = _argc;
-		}
-	};
-
-	std::multimap<std::string, Fun> funs;
-
-	int check_params();
-	void read_param_value(std::vector<double>&);
-	void exec_fun(std::vector<double>&);
-	void add_fun_vars(std::vector<double>&);
-	void del_fun_vars(std::multimap<std::string, double>&);
-
-	friend class Cmd;
-public:
-	Function();
-	~Function();
-
-	bool is_fun(const std::string&);
-
-	void add_fun(const std::string& _name, 
-		std::string& _body, int _argc);
-	void delete_fun(const std::string&);
-	void execute(const std::string&);
-};
-extern Function fun;
+} cmd;
 
 
 
@@ -90,10 +52,21 @@ class Executive {
 	bool not_executive() const;
 
 	double get_value() const;
+
 public:
 	void eval(const char*);
 	void assign_variable() const;
 	double compute_exp() const;
-
 };
 extern Executive exec;
+
+
+
+static class FunFunctor {
+	void read_param_value(std::vector<double>&);
+	void execute(std::vector<double>&);
+	void add_fun_vars(std::vector<double>&);
+	//void del_fun_vars(std::multimap<std::string, double>&);
+public:
+	void operator()(const std::string&);
+} execute_fun;
