@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <string>
 #include <vector>
 #include <map>
@@ -13,12 +14,11 @@ class Function {
 	// }
 
 	struct Fun {
-		std::string body;
+		std::shared_ptr<std::string> body;
 		int argc = 0;
 		Fun(std::string& _body, int _argc)
-			: body(std::move(_body)) {
-			argc = _argc;
-		}
+			: body(std::make_shared<std::string>(_body)),
+			argc(_argc) {}
 	};
 
 	std::multimap<std::string, Fun> funs;

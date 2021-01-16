@@ -134,15 +134,25 @@ void Cmd::cmd_if() {
 	parser.read_token();
 	
 	if (token[0] == '{') {
-		if (condition) {
-			exec.eval(program);
-			skip_rest_conditional();
+		std::multimap<std::string, double> vars;
+		var.copy_to(vars);
+
+		try {
+			if (condition) {
+				exec.eval(program);
+				skip_rest_conditional();
+			}
+			else {
+				parser.putback_token();
+				skip_if();
+				// to continue in the following branch if there is
+				following_branch();
+			}
+			var.restore_with_changes(vars);
 		}
-		else {
-			parser.putback_token();
-			skip_if();			
-			// to continue in the following branch if there is
-			following_branch();
+		catch (Exception& e) {
+			var.restore(vars);
+			throw e;
 		}
 	}
 	else throw Exception(INVALID_SYNTAX);
@@ -159,7 +169,18 @@ void Cmd::cmd_else() {
 	if (tok == IF) {
 		parser.read_token();
 
-		if (token[0] == '{') exec.eval(program);
+		if (token[0] == '{') {
+			std::multimap<std::string, double> vars;
+			var.copy_to(vars);
+
+			try {
+				exec.eval(program);
+			}
+			catch (Exception& e) {
+				var.restore(vars);
+				throw e;
+			}
+		}
 		else throw Exception(INVALID_SYNTAX);
 	}
 	else throw Exception(INVALID_SYNTAX);
@@ -585,7 +606,7 @@ void FunFunctor::operator()(const std::string& key) {
 				register char* temp = program;
 
 				try {
-					program = const_cast<char*>(it->second.body.c_str());
+					program = const_cast<char*>(it->second.body->c_str());
 					execute(values);
 					program = temp;
 					return;
