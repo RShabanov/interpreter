@@ -54,7 +54,8 @@ void Scanner::run() {
 
 			parser.read_token();
 
-			if (token_type == QUOTE)
+			if (parser.is_eol()) {}
+			else if (token_type == QUOTE)
 				cout << token << endl;
 			else if (token_type == VARIABLE)
 				token_variable();
@@ -171,7 +172,7 @@ void Scanner::token_variable() const {
 
 
 void Scanner::token_expression() const {
-	register double res = exec.compute_exp();
+	register double res = exec.compute_expr();
 	parser.read_token();
 
 	if (!parser.is_end()) throw Exception(INVALID_SYNTAX);

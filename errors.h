@@ -18,7 +18,9 @@ enum error_types {
 	ALREADY_DEFINED,
 	NOT_INITIALIZED,
 	NOT_OPEN_FILE,
-	BAD_FILE
+	BAD_FILE,
+	ELIF_WITHOUT_IF,
+	ELSE_WITHOUT_IF
 };
 
 
@@ -39,5 +41,7 @@ static const char* errors[]{
 	"already defined name.",
 	"defining variable without being initialized.",
 	"file cannot be opened.",
-	"cannot read file properly."
+	"cannot read file properly.",
+	"elif cannot be used without \"if\".",
+	"else cannot be used without \"if\"."
 };

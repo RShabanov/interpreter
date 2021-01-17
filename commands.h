@@ -22,6 +22,8 @@ static class Cmd {
 	void skip_rest_conditional();
 	void following_branch();
 
+	double get_fst_condition(std::string&);
+
 	void cmd_print();
 	void cmd_input();
 	void cmd_if();
@@ -31,32 +33,39 @@ static class Cmd {
 	void cmd_for();
 	void cmd_fun();
 	void cmd_let();
+	double cmd_and(const char* = nullptr);
+	double cmd_not(const char* = nullptr);
+	double cmd_or(const char* = nullptr);
 	void cmd_return();
 public:
 	Cmd();
 	~Cmd();
 
 	bool is_return_cmd(int);
+	bool is_logic_oper(int);
 	bool is_cmd(const std::string& _cmd, int& pos);
-	
+	bool logic_oper(int _tok, double fst_cond, double snd_cond);
+	bool read_condition();
+
 	void execute(int cmd_token);
 } cmd;
 
 
 
 class Executive {
-	void read_exp(std::string&) const;
+	void read_expr(std::string&, bool condition_only) const;
 	void eval_var() const;
-	void invert_opers() const; // opers from token.h
-
-	bool not_executive() const;
 
 	double get_value() const;
 
 public:
 	void eval(const char*);
 	void assign_variable() const;
-	double compute_exp() const;
+	void invert_opers() const; // opers from token.h
+
+	double compute_expr(bool condition_only = false) const;
+
+	bool not_executive() const;
 };
 extern Executive exec;
 

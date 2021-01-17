@@ -8,7 +8,8 @@ enum token_types {
 	FUNCTION,
 	COMMAND, 
 	QUOTE, 
-	DELIMITER
+	DELIMITER,
+	COMMENT
 };
 
 enum tokens {
@@ -21,6 +22,9 @@ enum tokens {
 	FOR,
 	FUN,
 	LET,
+	AND,
+	OR,
+	NOT,
 	RETURN, 
 	FINISHED, 
 	EOL

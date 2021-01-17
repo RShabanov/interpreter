@@ -8,7 +8,8 @@ int main(int argc, char* argv[]) {
 	using namespace std;
 
 	Scanner scanner;
-	scanner.run("./tests/test_if_2.txt");
+	scanner.run("./tests/test_if_6.txt");
+
 	//scanner.run();
 
 	/*if (argc > 1) {

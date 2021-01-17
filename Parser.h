@@ -19,6 +19,7 @@ class Parser {
 	bool is_quote(char) const;
 	bool is_number(char*) const;
 	bool is_string(char) const;
+	bool is_comment(char) const;
 	bool is_escape_char(char*) const;
 
 	void token_eof();
@@ -28,7 +29,7 @@ class Parser {
 	void token_quote();
 	void token_number();
 	void token_string();
-	void token_brace();
+	void token_comment();
 
 	void parse_brackets(double& result); // парсинг скобок ()
 	void parse_unary(double& result); // парсинг унарных операций

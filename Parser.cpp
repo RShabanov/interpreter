@@ -191,6 +191,7 @@ void Parser::read_token() {
 		if (var.is_var(token)) token_type = VARIABLE;
 		else token_type = STRING;
 	}
+	else if (is_comment(*program)) token_comment();
 	else throw Exception(INVALID_SYNTAX);
 }
 
@@ -235,6 +236,10 @@ inline bool Parser::is_number(char* str) const {
 
 inline bool Parser::is_string(char s) const {
 	return isalpha(s) || s == '_';
+}
+
+inline bool Parser::is_comment(char s) const {
+	return s == '#';
 }
 
 inline bool Parser::is_escape_char(char* str) const {
@@ -297,20 +302,14 @@ void Parser::token_opers() {
 			program += 2;
 			token.push_back(LE);
 		}
-		else {
-			program++;
-			token.push_back('<');
-		}
+		else token.push_back(*program++);
 		break;
 	case '>':
 		if (*(program + 1) == '=') {
 			program += 2;
 			token.push_back(GE);
 		}
-		else {
-			program++;
-			token.push_back('>');
-		}
+		else token.push_back(*program++);
 		break;
 	case '=':
 		if (*(program + 1) == '=') {
@@ -366,13 +365,12 @@ void Parser::token_string() {
 		token.push_back(*program++);
 }
 
-//void Parser::token_brace() {
-//	if (brackets.is_brace(*program))
-//		brackets.push(*program);
-//	tok = *program == '{' ? OPEN_BRACE : CLOSE_BRACE;
-//	token.push_back(*program++);
-//	token_type = COMMAND;
-//}
+void Parser::token_comment() {
+	do {
+		program++;
+	} while (*program != '\0' && *program != '\r');
+	parser.read_token();
+}
 
 
 void Parser::putback_token() {
