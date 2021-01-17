@@ -397,3 +397,11 @@ char Parser::get_escape_char(char* _str) const {
 	default: return *_str;
 	}
 }
+
+
+void Parser::skip_eol() {
+	do {
+		read_token();
+	} while (is_eol());
+	putback_token();
+}

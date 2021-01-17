@@ -1,5 +1,10 @@
 # and, or
-
+if 5 > 7 or 5 > 6 and 0 == 0 {
+	print("AND works!")
+}
+else {
+	print("Else 4")
+}
 
 if 5 > 7 and 5 > 6 or 0 == 0 {
 	print("AND works!")

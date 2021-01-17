@@ -57,15 +57,6 @@ void Cmd::execute(int cmd_token) {
 	case RETURN:
 		cmd_return();
 		break;
-	case AND:
-		cmd_and();
-		break;
-	case OR:
-		cmd_or();
-		break;
-	case NOT:
-		cmd_not();
-		break;
 	}
 }
 
@@ -144,7 +135,13 @@ void Cmd::cmd_if() {
 	
 	//bool condition = exec.compute_expr();
 	bool condition = read_condition();
+	/*do {
+		parser.read_token();
+	} while (parser.is_eol());*/
+	parser.skip_eol();
 	parser.read_token();
+
+
 	
 	if (token[0] == '{') {
 		std::multimap<std::string, double> vars;
@@ -180,6 +177,8 @@ void Cmd::cmd_elif() {
 void Cmd::cmd_else() {
 	// else condition { ... }
 	if (tok == IF) {
+		/*parser.read_token();*/
+		parser.skip_eol();
 		parser.read_token();
 
 		if (token[0] == '{') {
@@ -210,54 +209,6 @@ bool Cmd::logic_oper(int _tok, double fst_cond, double snd_cond) {
 	default:
 		throw Exception(INVALID_SYNTAX);
 	}
-}
-
-double Cmd::cmd_and(const char* expr) {
-	// ... and ...
-	/*register double res = get_fst_condition(expr);*/
-
-	if (expr == nullptr) throw Exception(INVALID_SYNTAX);
-
-	register double cond_fst, cond_snd;
-	register char* temp = program;
-	program = const_cast<char*>(expr) + (*expr == '(' ? 1 : 0);
-	parser.parse(cond_fst);
-	program = temp;
-
-	cond_snd = exec.compute_expr(true);
-
-	parser.read_token();
-	if (token[0] != ')') parser.putback_token();
-
-	return cond_fst && cond_snd;
-}
-
-double Cmd::cmd_not(const char* expr) {
-	// not ...
-	return 0.0;
-}
-
-double Cmd::cmd_or(const char* expr) {
-	// ... or ...
-	// TODO
-
-	if (expr == nullptr) throw Exception(INVALID_SYNTAX);
-
-	register double cond_fst, cond_snd;
-	register char* temp = program;
-	program = const_cast<char*>(expr) + (*expr == '(' ? 1 : 0);
-	parser.parse(cond_fst);
-	program = temp;
-
-	cond_snd = exec.compute_expr();
-
-	parser.read_token();
-	if (token[0] != ')') parser.putback_token();
-
-	return cond_fst || cond_snd;
-
-
-	return 0.0;
 }
 
 
@@ -394,9 +345,12 @@ int Cmd::get_params_cnt() {
 }
 
 void Cmd::get_fun_body(std::string& body) {
-	do {
+	/*do {
 		parser.read_token();
-	} while (token[0] == '\r');
+	} while (token[0] == '\r');*/
+	parser.skip_eol();
+	parser.read_token();
+
 
 	if (token[0] == '{') {
 		parser.putback_token();
@@ -416,21 +370,27 @@ void Cmd::get_fun_body(std::string& body) {
 }
 
 void Cmd::skip_if() {
-	exec.compute_expr();
-	register auto braces = brackets.braces_size();
-	do {
-		parser.read_token();
-	} while (!parser.is_eof() && 
-		braces != brackets.braces_size());
+	if (is_cmd(token, tok) && tok == ELIF)
+		read_condition();
 
-	if (braces != brackets.braces_size())
-		throw Exception(EXTRA_BRACKET);
+	parser.skip_eol();
+	parser.read_token();
+
+	if (token[0] == '{') {
+		register auto braces = brackets.braces_size() - 1;
+		do {
+			parser.read_token();
+		} while (!parser.is_eof() &&
+			braces != brackets.braces_size());
+
+		if (braces != brackets.braces_size())
+			throw Exception(EXTRA_BRACKET);
+	}
+	else throw Exception(EXTRA_BRACKET);
 }
 
 void Cmd::skip_rest_conditional() {
-	do {
-		parser.read_token();
-	} while (!parser.is_eof() && token_type != STRING);
+	jump_to_another_word();
 
 	if (is_cmd(token, tok) && (tok == ELIF || tok == ELSE)) {
 		skip_if();
@@ -440,9 +400,7 @@ void Cmd::skip_rest_conditional() {
 }
 
 void Cmd::following_branch() {
-	do {
-		parser.read_token();
-	} while (!parser.is_eof() && token_type != STRING);
+	jump_to_another_word();
 
 	if (is_cmd(token, tok)) {
 		if (tok == ELIF) {
@@ -456,6 +414,12 @@ void Cmd::following_branch() {
 		else parser.putback_token();
 	}
 	else parser.putback_token();
+}
+
+void Cmd::jump_to_another_word() {
+	do {
+		parser.read_token();
+	} while (!parser.is_eof() && token_type != STRING);
 }
 
 bool Cmd::is_logic_oper(int _tok) {
@@ -492,7 +456,7 @@ bool Cmd::read_condition() {
 	register bool fst_pass = false;
 	bool res = false;
 	register char* temp_start = program;
-	register double fst, snd;
+	register double fst = NAN, snd = NAN;
 	register int oper = 0;
 
 	std::string expr;
@@ -506,15 +470,20 @@ bool Cmd::read_condition() {
 			program = const_cast<char*>(expr.c_str());
 			if (fst_pass) {
 				parser.parse(snd);
-				res = logic_oper(oper, fst, snd);
+				fst = res = logic_oper(oper, fst, snd);
 				expr = std::to_string(res);
+				fst_pass = !fst_pass;
+
+				program = temp_start;
+				if (parenthesis_cnt > 0) break;
 			}
 			else {
 				parser.parse(fst);
-				expr.clear();
+				expr = std::to_string(fst);
+				/*expr.clear();
+				fst_pass = !fst_pass;*/
 			}
 			oper = 0;
-			fst_pass = !fst_pass;
 			program = temp_start;
 		}
 		else if (exec.not_executive()) {
@@ -539,25 +508,46 @@ bool Cmd::read_condition() {
 				program = const_cast<char*>(expr.c_str());
 
 				if (fst_pass) {
-					parser.parse(snd);
+					if (tok == AND && oper == OR) {
+						program = temp_start;
+						program -= expr.length() + 3; // len("and") == 3
+						snd = read_condition();
+						fst = res = logic_oper(oper, fst, snd);
+
+						parser.read_token();
+						if (is_cmd(token, tok) && (tok == AND || tok == OR))
+							oper = tok;
+						else {
+							parser.putback_token();
+							break;
+						}
+					}
+					else {
+						//temp_start = program;
+						parser.parse(snd);
+						program = temp_start;
+						fst = res = logic_oper(oper, fst, snd);
+						oper = temp_oper; // запоминаем операцию
+					}
 					expr.clear();
-					program = temp_start;
-					res = logic_oper(oper, fst, snd);
-					expr = std::to_string(res);
+					//expr = std::to_string(res);
 				}
 				else {
 					parser.parse(fst);
 					expr.clear();
+					fst_pass = !fst_pass;
+					program = temp_start;
+					oper = temp_oper; // запоминаем операцию
 				}
-				oper = temp_oper; // запоминаем операцию
-				fst_pass = !fst_pass;
-				program = temp_start;
 			}
-			else throw Exception(INVALID_TYPE);
+			else throw Exception(INVALID_SYNTAX);
 		}
 		else if (token_type == STRING)
 			throw Exception(UNDEFINED_NAME);
 		else {
+			if (parenthesis_cnt != brackets.parenthesis_size())
+				throw Exception(EXTRA_BRACKET);
+			
 			parser.putback_token();
 			temp_start = program;
 			program = const_cast<char*>(expr.c_str());
@@ -569,17 +559,22 @@ bool Cmd::read_condition() {
 				parser.parse(fst);
 				res = fst;
 			}
+
 			expr.clear();
 			oper = 0;
 			fst_pass = !fst_pass;
 			program = temp_start;
+
+			if (std::isnan(fst) && std::isnan(snd))
+				throw Exception(INVALID_SYNTAX);
+
 			break;
 		}
 
 		expr += " ";
 	}
-	if (parenthesis_cnt != brackets.parenthesis_size())
-		throw Exception(EXTRA_BRACKET);
+	/*if (parenthesis_cnt != brackets.parenthesis_size())
+		throw Exception(EXTRA_BRACKET);*/
 	//parser.putback_token();
 	return res;
 }
@@ -649,13 +644,13 @@ void Executive::assign_variable() const {
 }
 
 
-double Executive::compute_expr(bool condition_only) const {
+double Executive::compute_expr() const {
 	// for things like:
 	// 2 * input() ...
 	// input() * input() - 5 * input(), etc
 
 	std::string expr;
-	read_expr(expr, condition_only);
+	read_expr(expr);
 
 	register double res = NAN;
 	register char* temp = program;
@@ -686,7 +681,7 @@ inline bool Executive::not_executive() const {
 }
 
 
-void Executive::read_expr(std::string& expr, bool condition_only) const {
+void Executive::read_expr(std::string& expr) const {
 	while (true) {
 		parser.read_token();
 
@@ -694,20 +689,14 @@ void Executive::read_expr(std::string& expr, bool condition_only) const {
 			if (token_type == DELIMITER) invert_opers();
 			expr += token;
 		}
-		/*else if (strchr("()", token[0]) && token[0]) {
-			if (condition_only) break;
-			expr += token;
-		}*/
 		else if (cmd.is_cmd(token, tok)) {
 			if (cmd.is_return_cmd(tok)) {
 				if (tok == RETURN) throw Exception(INVALID_SYNTAX);
 				cmd.execute(tok);
 				expr += token;
 			}
-			else if (cmd.is_logic_oper(tok)) {
-				if (condition_only) break;
+			else if (cmd.is_logic_oper(tok))
 				expr += std::to_string(cmd.read_condition());
-			}
 			else throw Exception(INVALID_TYPE);
 		}
 		else if (fun.is_fun(token)) {
@@ -836,9 +825,12 @@ void FunFunctor::execute(std::vector<double>& values) {
 
 	try {
 		add_fun_vars(values);
-		do {
+		/*do {
 			parser.read_token();
-		} while (parser.is_eol());
+		} while (parser.is_eol());*/
+		parser.skip_eol();
+		parser.read_token();
+
 
 		if (token[0] == '{') exec.eval(program);
 		else throw Exception(EXTRA_BRACKET);

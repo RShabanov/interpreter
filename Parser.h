@@ -55,6 +55,8 @@ public:
 	void read_token();
 	void putback_token();
 	void parse(double& result);
+
+	void skip_eol();
 };
 
 extern Parser parser;

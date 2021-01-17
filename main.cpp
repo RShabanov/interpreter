@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
 	using namespace std;
 
 	Scanner scanner;
-	scanner.run("./tests/test_if_6.txt");
+	scanner.run("./tests/test_if_1.txt");
 
 	//scanner.run();
 

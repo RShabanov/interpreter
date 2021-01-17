@@ -21,6 +21,7 @@ static class Cmd {
 	void skip_if();
 	void skip_rest_conditional();
 	void following_branch();
+	void jump_to_another_word();
 
 	double get_fst_condition(std::string&);
 
@@ -33,9 +34,6 @@ static class Cmd {
 	void cmd_for();
 	void cmd_fun();
 	void cmd_let();
-	double cmd_and(const char* = nullptr);
-	double cmd_not(const char* = nullptr);
-	double cmd_or(const char* = nullptr);
 	void cmd_return();
 public:
 	Cmd();
@@ -53,7 +51,7 @@ public:
 
 
 class Executive {
-	void read_expr(std::string&, bool condition_only) const;
+	void read_expr(std::string&) const;
 	void eval_var() const;
 
 	double get_value() const;
@@ -63,7 +61,7 @@ public:
 	void assign_variable() const;
 	void invert_opers() const; // opers from token.h
 
-	double compute_expr(bool condition_only = false) const;
+	double compute_expr() const;
 
 	bool not_executive() const;
 };
