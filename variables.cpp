@@ -38,7 +38,7 @@ void Var::delete_var(const std::string& key) {
 
 void Var::restore_with_changes(std::multimap<std::string, double>& _vars) {
 	std::set<std::string> var_name;
-	for (auto it : vars) var_name.insert(it.first);
+	for (auto it : _vars) var_name.insert(it.first);
 
 	for (auto name : var_name) {
 		auto range = vars.equal_range(name);

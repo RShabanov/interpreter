@@ -102,7 +102,7 @@ void Scanner::run(const char* filename) {
 
 		reset(code.c_str());
 
-		exec.eval(program);
+		exec.eval();
 	}
 	catch (Exception& e) {
 		std::cerr << e.what() << std::endl;

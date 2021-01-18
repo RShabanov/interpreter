@@ -20,6 +20,7 @@ enum tokens {
 	ELIF,
 	WHILE, 
 	FOR,
+	BREAK,
 	FUN,
 	LET,
 	AND,

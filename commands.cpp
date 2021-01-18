@@ -14,6 +14,7 @@ Cmd::Cmd() : return_cmd{ INPUT, RETURN },
 			{"elif", ELIF},
 			{"while", WHILE},
 			{"for", FOR},
+			{"break", BREAK},
 			{"fun", FUN},
 			{"let", LET},
 			{"and", AND},
@@ -143,12 +144,12 @@ void Cmd::cmd_if() {
 
 		try {
 			if (condition) {
-				exec.eval(program);
+				exec.eval();
 				skip_rest_conditional();
 			}
 			else {
 				parser.putback_token();
-				skip_if();
+				skip_executive_block();
 				// to continue in the following branch if there is
 				following_branch();
 			}
@@ -179,7 +180,8 @@ void Cmd::cmd_else() {
 			var.copy_to(vars);
 
 			try {
-				exec.eval(program);
+				exec.eval();
+				var.restore_with_changes(vars);
 			}
 			catch (Exception& e) {
 				var.restore(vars);
@@ -195,10 +197,40 @@ void Cmd::cmd_else() {
 
 void Cmd::cmd_while() {
 	// while condition { ... }
+	register char* loop_start = program;
+	bool condition = exec.compute_expr();
+
+	if (condition) {
+		std::multimap<std::string, double> vars;
+		var.copy_to(vars);
+
+		try {
+			do {
+				parser.skip_eol();
+				parser.read_token();
+				if (token[0] != '{')
+					throw Exception(INVALID_SYNTAX);
+
+				exec.eval();
+				program = loop_start;
+
+				var.restore_with_changes(vars);
+			} while (exec.compute_expr());
+		}
+		catch (Exception& e) {
+			var.restore(vars);
+			throw e;
+		}
+	}
+	else skip_executive_block();
 }
 
 void Cmd::cmd_for() {
 	// for let i : range(start, stop, step) { ... }
+}
+
+void Cmd::cmd_break() {
+
 }
 
 void Cmd::cmd_fun() {
@@ -347,7 +379,7 @@ void Cmd::get_fun_body(std::string& body) {
 	else throw Exception(EXTRA_BRACKET);
 }
 
-void Cmd::skip_if() {
+void Cmd::skip_executive_block() {
 	if (is_cmd(token, tok) && tok == ELIF)
 		exec.compute_expr();
 
@@ -371,7 +403,7 @@ void Cmd::skip_rest_conditional() {
 	jump_to_another_word();
 
 	if (is_cmd(token, tok) && (tok == ELIF || tok == ELSE)) {
-		skip_if();
+		skip_executive_block();
 		skip_rest_conditional();
 	}
 	else parser.putback_token();
@@ -416,9 +448,7 @@ bool Cmd::is_logic_oper(int _tok) {
 /////////////	EXECUTIVE	//////////////
 /////////						//////////
 
-void Executive::eval(const char* _code) {
-	program = const_cast<char*>(_code);
-
+void Executive::eval() {
 	do {
 		parser.read_token();
 
@@ -761,7 +791,7 @@ void FunFunctor::execute(std::vector<double>& values) {
 		parser.skip_eol();
 		parser.read_token();
 
-		if (token[0] == '{') exec.eval(program);
+		if (token[0] == '{') exec.eval();
 		else throw Exception(EXTRA_BRACKET);
 
 		fun.funs = temp_funs;

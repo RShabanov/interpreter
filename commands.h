@@ -19,7 +19,7 @@ static class Cmd {
 	int get_params_cnt();
 	void get_fun_body(std::string&);
 
-	void skip_if();
+	void skip_executive_block(); // название придумать получше
 	void skip_rest_conditional();
 	void following_branch();
 	void jump_to_another_word();
@@ -33,6 +33,7 @@ static class Cmd {
 	void cmd_for();
 	void cmd_fun();
 	void cmd_let();
+	void cmd_break();
 	void cmd_return();
 public:
 	Cmd();
@@ -60,7 +61,7 @@ class Executive {
 	bool contains_number(char) const;
 
 public:
-	void eval(const char*);
+	void eval();
 	void assign_variable();
 
 	double compute_expr();

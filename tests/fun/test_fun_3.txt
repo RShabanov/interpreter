@@ -1,0 +1,18 @@
+fun voo(let a) {
+	print("voo")
+	a = 5
+	let b = 3
+	c = a + b
+	print("a:", a)
+	print("b:", b)
+}
+
+let a = 0
+let c = 3
+print("a:", a)
+print("c:", c)
+print("Before voo")
+voo(a)
+print("After voo")
+print("a:", a)
+print("c:", c)

@@ -1,0 +1,12 @@
+let a = 3, b = 5
+print("a:", a)
+print("b:", b)
+
+elif a == b {
+	let c = a
+	print("a == b")
+}
+else {
+	let c = b
+	print("b < a")
+}

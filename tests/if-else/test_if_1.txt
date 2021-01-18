@@ -1,0 +1,13 @@
+let a = 3, b = 3
+print("a:", a)
+print("b:", b)
+
+if a > b {
+	print("a > b")
+}
+elif a < b {
+	print("a < b")
+}
+elif (a == b) {
+	print("a == b")
+}

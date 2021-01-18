@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
 	using namespace std;
 
 	Scanner scanner;
-	scanner.run("./tests/test_if_11.txt");
+	scanner.run("./tests/loop/test_loop_1.txt");
 	//scanner.run();
 
 	/*program = const_cast<char*>(
