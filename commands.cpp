@@ -66,7 +66,7 @@ void Cmd::cmd_print() {
 	parser.read_token();
 	if (token[0] == '(') {
 		std::string result_str;
-		out_string(result_str); // подготовить строку к выводу
+		out_string(result_str); // ГЇГ®Г¤ГЈГ®ГІГ®ГўГЁГІГј Г±ГІГ°Г®ГЄГі ГЄ ГўГ»ГўГ®Г¤Гі
 
 		if (token[0] == ')')
 			std::cout << result_str << std::endl;
@@ -77,7 +77,7 @@ void Cmd::cmd_print() {
 
 
 void Cmd::cmd_input() {
-	// ограничимся пока вводом double
+	// Г®ГЈГ°Г Г­ГЁГ·ГЁГ¬Г±Гї ГЇГ®ГЄГ  ГўГўГ®Г¤Г®Г¬ double
 	register char* start = program;
 
 	parser.read_token();
@@ -106,7 +106,7 @@ void Cmd::cmd_input() {
 
 
 void Cmd::cmd_let() {
-	// на вход program указывает на "var = 5"
+	// Г­Г  ГўГµГ®Г¤ program ГіГЄГ Г§Г»ГўГ ГҐГІ Г­Г  "var = 5"
 	std::vector<std::string> var_map;
 
 	try {
@@ -216,6 +216,8 @@ void Cmd::cmd_while() {
 
 				var.restore_with_changes(vars);
 			} while (exec.compute_expr());
+			
+			skip_executive_block();
 		}
 		catch (Exception& e) {
 			var.restore(vars);
@@ -806,12 +808,12 @@ void FunFunctor::execute(std::vector<double>& values) {
 }
 
 void FunFunctor::add_fun_vars(std::vector<double>& values) {
-	// сопоставляет переменные со значениями
+	// Г±Г®ГЇГ®Г±ГІГ ГўГ«ГїГҐГІ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ Г±Г® Г§Г­Г Г·ГҐГ­ГЁГїГ¬ГЁ
 	// (let a, b, c)
 	// (	1, 2, 3), e.g.
-	// т.к. проверка на корректность формы
-	// происходит перед данной функцией,
-	// то здесь ее можно опустить
+	// ГІ.ГЄ. ГЇГ°Г®ГўГҐГ°ГЄГ  Г­Г  ГЄГ®Г°Г°ГҐГЄГІГ­Г®Г±ГІГј ГґГ®Г°Г¬Г»
+	// ГЇГ°Г®ГЁГ±ГµГ®Г¤ГЁГІ ГЇГҐГ°ГҐГ¤ Г¤Г Г­Г­Г®Г© ГґГіГ­ГЄГ¶ГЁГҐГ©,
+	// ГІГ® Г§Г¤ГҐГ±Гј ГҐГҐ Г¬Г®Г¦Г­Г® Г®ГЇГіГ±ГІГЁГІГј
 
 	parser.read_token(); // skip '('
 	parser.read_token(); // skip "let" if it is
