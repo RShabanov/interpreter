@@ -157,6 +157,8 @@ void Parser::read_values(double& result) {
 	switch (token_type) {
 	case VARIABLE:
 		result = var.get_var(token);
+		if (std::isnan(result))
+			throw Exception(NOT_INITIALIZED);
 		break;
 	case NUMBER:
 		result = atof(token.c_str());
@@ -209,7 +211,8 @@ inline bool Parser::is_cr(char symbol) const {
 }
 
 inline bool Parser::is_opers(char symbol) const {
-	return strchr("<!=>", symbol);
+	const char opers[] = { '<', '!', '=','>', EQ, NE,GE,LE,0 };
+	return strchr(opers, symbol);
 }
 
 inline bool Parser::is_delim(char symbol) const {
@@ -332,6 +335,22 @@ void Parser::token_opers() {
 			token.push_back(NE);
 		}
 		else throw Exception(INVALID_SYNTAX);
+		break;
+	case EQ:
+		token.push_back(EQ);
+		program++;
+		break;
+	case NE:
+		token.push_back(NE);
+		program++;
+		break;
+	case GE:
+		token.push_back(GE);
+		program++;
+		break;
+	case LE:
+		token.push_back(LE);
+		program++;
 		break;
 	}
 

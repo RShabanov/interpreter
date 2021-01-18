@@ -1,5 +1,4 @@
 # test_fun #7
-
 fun foo() {
 	print("foo")
 	

@@ -35,6 +35,12 @@ static class Cmd {
 	void cmd_let();
 	void cmd_break();
 	void cmd_return();
+	
+	void cmd_sin();
+	void cmd_cos();
+	void cmd_log();
+	void cmd_exp();
+
 public:
 	Cmd();
 	~Cmd();
@@ -65,13 +71,14 @@ public:
 	void assign_variable();
 
 	double compute_expr();
+
+	void read_param_value(std::vector<double>&);
 };
 extern Executive exec;
 
 
 
 static class FunFunctor {
-	void read_param_value(std::vector<double>&);
 	void execute(std::vector<double>&);
 	void add_fun_vars(std::vector<double>&);
 	//void del_fun_vars(std::multimap<std::string, double>&);

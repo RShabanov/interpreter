@@ -20,7 +20,9 @@ enum error_types {
 	NOT_OPEN_FILE,
 	BAD_FILE,
 	ELIF_WITHOUT_IF,
-	ELSE_WITHOUT_IF
+	ELSE_WITHOUT_IF,
+	BAD_VALUE,
+	INVALID_LOG_BASE
 };
 
 
@@ -43,5 +45,7 @@ static const char* errors[]{
 	"file cannot be opened.",
 	"cannot read file properly.",
 	"elif cannot be used without \"if\".",
-	"else cannot be used without \"if\"."
+	"else cannot be used without \"if\".",
+	"bad value.",
+	"invalid logarithm base."
 };

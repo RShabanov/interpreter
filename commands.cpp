@@ -5,7 +5,7 @@
 Executive exec;
 // ----------------------------------
 
-Cmd::Cmd() : return_cmd{ INPUT, RETURN },
+Cmd::Cmd() : return_cmd{ INPUT, RETURN, SIN, COS, LOG, EXP },
 	cmd_table{
 			{"print", PRINT},
 			{"input", INPUT},
@@ -13,14 +13,18 @@ Cmd::Cmd() : return_cmd{ INPUT, RETURN },
 			{"else", ELSE},
 			{"elif", ELIF},
 			{"while", WHILE},
-			{"for", FOR},
-			{"break", BREAK},
+			//{"for", FOR},
+			//{"break", BREAK},
 			{"fun", FUN},
 			{"let", LET},
 			{"and", AND},
 			{"or", OR},
 			{"not", NOT},
 			{"return", RETURN},
+			{"sin", SIN},
+			{"cos", COS},
+			{"log", LOG},
+			{"exp", EXP},
 	} {}
 
 Cmd::~Cmd() {}
@@ -46,9 +50,9 @@ void Cmd::execute(int cmd_token) {
 	case WHILE:
 		cmd_while();
 		break;
-	case FOR:
-		cmd_for();
-		break;
+	//case FOR:
+	//	cmd_for();
+	//	break;
 	case FUN:
 		cmd_fun();
 		break;
@@ -58,6 +62,18 @@ void Cmd::execute(int cmd_token) {
 	case RETURN:
 		cmd_return();
 		break;
+	case SIN:
+		cmd_sin();
+		break;
+	case COS:
+		cmd_cos();
+		break;
+	case LOG:
+		cmd_log();
+		break;
+	case EXP:
+		cmd_exp();
+		break;
 	}
 }
 
@@ -66,10 +82,10 @@ void Cmd::cmd_print() {
 	parser.read_token();
 	if (token[0] == '(') {
 		std::string result_str;
-		out_string(result_str); // ГЇГ®Г¤ГЈГ®ГІГ®ГўГЁГІГј Г±ГІГ°Г®ГЄГі ГЄ ГўГ»ГўГ®Г¤Гі
+		out_string(result_str); // подготовить строку к выводу
 
 		if (token[0] == ')')
-			std::cout << result_str << std::endl;
+			std::cout << result_str; //  << std::endl
 		else throw Exception(EXTRA_BRACKET);
 	}
 	else throw Exception(INVALID_SYNTAX);
@@ -77,7 +93,7 @@ void Cmd::cmd_print() {
 
 
 void Cmd::cmd_input() {
-	// Г®ГЈГ°Г Г­ГЁГ·ГЁГ¬Г±Гї ГЇГ®ГЄГ  ГўГўГ®Г¤Г®Г¬ double
+	// ограничимся пока вводом double
 	register char* start = program;
 
 	parser.read_token();
@@ -106,7 +122,7 @@ void Cmd::cmd_input() {
 
 
 void Cmd::cmd_let() {
-	// Г­Г  ГўГµГ®Г¤ program ГіГЄГ Г§Г»ГўГ ГҐГІ Г­Г  "var = 5"
+	// на вход program указывает на "var = 5"
 	std::vector<std::string> var_map;
 
 	try {
@@ -216,7 +232,7 @@ void Cmd::cmd_while() {
 
 				var.restore_with_changes(vars);
 			} while (exec.compute_expr());
-			
+
 			skip_executive_block();
 		}
 		catch (Exception& e) {
@@ -228,11 +244,15 @@ void Cmd::cmd_while() {
 }
 
 void Cmd::cmd_for() {
-	// for let i : range(start, stop, step) { ... }
+	// for (let i : range(start, stop, step)) { ... }
+	// TODO
+	// [complementary]
 }
 
 void Cmd::cmd_break() {
-
+	// TODO
+	// have no idea how to do it right now
+	// [complementary]
 }
 
 void Cmd::cmd_fun() {
@@ -265,10 +285,58 @@ void Cmd::cmd_return() {
 	else throw Exception(INVALID_SYNTAX);
 }
 
-// sin
-// cos
-// log
-// ect
+void Cmd::cmd_sin() {
+	std::vector<double> params;
+	exec.read_param_value(params);
+
+	if (params.size() == 1)
+		token = std::to_string(sin(params[0]));
+	else throw Exception(NOT_ENOUGH_PARAMS);
+}
+
+void Cmd::cmd_cos() {
+	std::vector<double> params;
+	exec.read_param_value(params);
+
+	if (params.size() == 1)
+		token = std::to_string(cos(params[0]));
+	else throw Exception(NOT_ENOUGH_PARAMS);
+}
+
+void Cmd::cmd_log() {
+	std::vector<double> params;
+	exec.read_param_value(params);
+
+	switch (params.size()) {
+	case 1:
+		if (params[0] < 0)
+			throw Exception(BAD_VALUE);
+
+		token = std::to_string(log(params[0]));
+		break;
+	case 2:
+		if (params[0] < 0)
+			throw Exception(BAD_VALUE);
+		if (params[1] <= 0 || params[1] == 1)
+			throw Exception(INVALID_LOG_BASE);
+
+		token = std::to_string(log(params[0]) / log(params[1]));
+		break;
+	case 0:
+		throw Exception(NOT_ENOUGH_PARAMS);
+	default:
+		throw Exception(TOO_MANY_PARAMS);
+	}
+}
+
+void Cmd::cmd_exp() {
+	std::vector<double> params;
+	exec.read_param_value(params);
+
+	if (params.size() == 1)
+		token = std::to_string(exp(params[0]));
+	else throw Exception(NOT_ENOUGH_PARAMS);
+}
 
 
 
@@ -309,18 +377,41 @@ void Cmd::define_variable() {
 
 void Cmd::out_string(std::string& result_str) {
 	register double result;
+	std::string str_end = "\n";
 
 	while (true) {
 		parser.read_token();
-		if (parser.is_end() || token[0] == ')' ||
-			token[0] == '}' && !brackets.braces_size())
+		if (parser.is_end() || token == ")" ||
+			token == "}" && !brackets.braces_size())
 			break;
 
 		if (token_type == QUOTE) result_str += token;
 		else {
-			parser.putback_token();
-			result = exec.compute_expr();
 
+			if (token == "end") {
+				register char* temp_start = program;
+				parser.read_token();
+				if (token[0] == '=') {
+					parser.read_token();
+					if (token_type == QUOTE) {
+						str_end = token;
+
+						parser.read_token();
+						if (token[0] != ')')
+							throw Exception(INVALID_SYNTAX);
+						break;
+					}
+					else throw Exception(INVALID_SYNTAX);
+				}
+				else {
+					parser.putback_token();
+					program = temp_start;
+					token = "end";
+				}
+			}
+			parser.putback_token();
+
+			result = exec.compute_expr();
 			result_str += std::to_string(result);
 		}
 		parser.read_token();
@@ -329,6 +420,8 @@ void Cmd::out_string(std::string& result_str) {
 			result_str += " ";
 		else if (token[0] == ')') break;
 	}
+
+	result_str += str_end;
 }
 
 
@@ -451,13 +544,14 @@ bool Cmd::is_logic_oper(int _tok) {
 /////////						//////////
 
 void Executive::eval() {
+	size_t braces_cnt = brackets.braces_size();
 	do {
 		parser.read_token();
 
 		if (parser.is_eol() || token_type == QUOTE) continue;
 
-		if (token[0] == '}' && !brackets.braces_size() ||
-			parser.is_eof() || tok == RETURN || !*program) 
+		if (token[0] == '}' && (brackets.braces_size() - braces_cnt) ||
+			parser.is_eof() || tok == RETURN) 
 			break;
 
 		if (token_type == VARIABLE) eval_var();
@@ -570,6 +664,23 @@ double Executive::compute_expr() {
 	return get_number(expr);
 }
 
+void Executive::read_param_value(std::vector<double>& values) {
+	parser.read_token();
+	if (token[0] == '(') {
+		register double val;
+		do {
+			val = exec.compute_expr();
+			parser.read_token();
+			if (std::isnan(val)) {
+				if (token[0] == ')') break;
+				else throw Exception(INVALID_TYPE);
+			}
+			values.push_back(val);
+		} while (parser.is_comma(token[0]));
+	}
+	else throw Exception(EXTRA_BRACKET);
+}
+
 
 ////////////////////////////////////////////
 ////									////
@@ -649,8 +760,6 @@ bool Executive::get_condition_not() {
 
 
 double Executive::get_number(std::string& expr) {
-	if (expr.empty()) throw Exception(INVALID_SYNTAX);
-
 	register double res = NAN;
 	register char* temp_start = program;
 
@@ -759,7 +868,7 @@ void FunFunctor::operator()(const std::string& key) {
 	auto range = fun.funs.equal_range(key);
 	if (range.first != range.second) {
 		std::vector<double> values;
-		read_param_value(values);
+		exec.read_param_value(values);
 
 		for (auto it = range.first; it != range.second; it++)
 			if (it->second.argc == values.size()) {
@@ -808,12 +917,12 @@ void FunFunctor::execute(std::vector<double>& values) {
 }
 
 void FunFunctor::add_fun_vars(std::vector<double>& values) {
-	// Г±Г®ГЇГ®Г±ГІГ ГўГ«ГїГҐГІ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ Г±Г® Г§Г­Г Г·ГҐГ­ГЁГїГ¬ГЁ
+	// сопоставляет переменные со значениями
 	// (let a, b, c)
 	// (	1, 2, 3), e.g.
-	// ГІ.ГЄ. ГЇГ°Г®ГўГҐГ°ГЄГ  Г­Г  ГЄГ®Г°Г°ГҐГЄГІГ­Г®Г±ГІГј ГґГ®Г°Г¬Г»
-	// ГЇГ°Г®ГЁГ±ГµГ®Г¤ГЁГІ ГЇГҐГ°ГҐГ¤ Г¤Г Г­Г­Г®Г© ГґГіГ­ГЄГ¶ГЁГҐГ©,
-	// ГІГ® Г§Г¤ГҐГ±Гј ГҐГҐ Г¬Г®Г¦Г­Г® Г®ГЇГіГ±ГІГЁГІГј
+	// т.к. проверка на корректность формы
+	// происходит перед данной функцией,
+	// то здесь ее можно опустить
 
 	parser.read_token(); // skip '('
 	parser.read_token(); // skip "let" if it is
@@ -825,21 +934,4 @@ void FunFunctor::add_fun_vars(std::vector<double>& values) {
 
 		parser.read_token(); // read ',' or ')';
 	}
-}
-
-void FunFunctor::read_param_value(std::vector<double>& values) {
-	parser.read_token();
-	if (token[0] == '(') {
-		register double val;
-		do {
-			val = exec.compute_expr();
-			parser.read_token();
-			if (std::isnan(val)) {
-				if (token[0] == ')') break;
-				else throw Exception(INVALID_TYPE);
-			}
-			values.push_back(val);
-		} while (parser.is_comma(token[0]));
-	}
-	else throw Exception(EXTRA_BRACKET);
 }

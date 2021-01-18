@@ -1,0 +1,4 @@
+let x = input("Enter x (power of exp): ")
+
+print("e^(", end="")
+print(x, ") =", exp(x))
