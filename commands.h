@@ -1,5 +1,6 @@
 #pragma once
 #include <cstring>
+#include <climits>
 #include <map>
 #include <set>
 #include "token.h"
@@ -23,8 +24,6 @@ static class Cmd {
 	void following_branch();
 	void jump_to_another_word();
 
-	double get_fst_condition(std::string&);
-
 	void cmd_print();
 	void cmd_input();
 	void cmd_if();
@@ -42,8 +41,6 @@ public:
 	bool is_return_cmd(int);
 	bool is_logic_oper(int);
 	bool is_cmd(const std::string& _cmd, int& pos);
-	bool logic_oper(int _tok, double fst_cond, double snd_cond);
-	bool read_condition();
 
 	void execute(int cmd_token);
 } cmd;
@@ -51,19 +48,22 @@ public:
 
 
 class Executive {
-	void read_expr(std::string&) const;
-	void eval_var() const;
+	void read_expr(std::string&);
+	void invert_opers(); // opers from token.h
+	void eval_var();
 
-	double get_value() const;
+	double get_value();
+
+	bool not_executive() const;
+	bool get_condition_not();
+	bool contains_alnum(std::string&) const;
 
 public:
 	void eval(const char*);
-	void assign_variable() const;
-	void invert_opers() const; // opers from token.h
+	void assign_variable();
 
-	double compute_expr() const;
-
-	bool not_executive() const;
+	double compute_expr();
+	//bool read_condition();
 };
 extern Executive exec;
 

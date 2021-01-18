@@ -1,28 +1,28 @@
 # and, or
 if 5 > 7 or 5 > 6 and 0 == 0 {
-	print("AND works!")
+	print("5 > 7 or 5 > 6 and 0 == 0:\t true")
 }
 else {
-	print("Else 4")
+	print("5 > 7 or 5 > 6 and 0 == 0:\t false")
 }
 
 if 5 > 7 and 5 > 6 or 0 == 0 {
-	print("AND works!")
+	print("5 > 7 and 5 > 6 or 0 == 0:\t true")
 }
 else {
-	print("Else 1")
+	print("5 > 7 and 5 > 6 or 0 == 0:\t false")
 }
 
 if 5 > 3 and 5 < 6 or 0 != 0 {
-	print("AND works!")
+	print("5 > 3 and 5 < 6 or 0 != 0:\t true")
 }
 else {
-	print("Else 2!")
+	print("5 > 3 and 5 < 6 or 0 != 0:\t false")
 }
 
 if 5 > 7 or 5 < 6 {
-	print("OR works!")
+	print("5 > 7 or 5 < 6:\t true")
 }
 else {
-	print("else 3")
+	print("5 > 7 or 5 < 6:\t false")
 }
