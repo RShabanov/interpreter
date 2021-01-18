@@ -1,5 +1,0 @@
-let pi = 3.14159265
-let degree = input("Enter degree: ")
-
-print("sin(", end="")
-print(degree, ") =", cos(degree * pi / 180))

@@ -1,5 +1,0 @@
-print("((5 - 2)*3 > 2 or 7 > 5 and 5 - 4 != 0) and 5 + 2 >= 7", ((5 - 2)*3 > 2 or 7 > 5 and 5 - 4 != 0) and 5 + 2 >= 7)
-print("not 5 - 2 > 2:\t", (not (5 - 2 > 2) ) )
-print("not not not 5 - 2 > 3:", not not not 5 - 2 > 3)
-
-print(" and 5 - 2 > 0:", and 5 - 2 > 0) # error

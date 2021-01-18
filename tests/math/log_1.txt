@@ -1,6 +1,0 @@
-# log(value, base) or log(value) - for ln
-print("log(65536, 2) =", log(65536, 2))
-
-let x = input("Enter x [for log(x)]: ")
-print("log(", end="")
-print(x, ") =", log(x))

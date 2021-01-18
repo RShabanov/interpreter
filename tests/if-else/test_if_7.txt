@@ -1,6 +1,0 @@
-if (5 > 7 and 5 > 6 or 0 != 0 {
-	print("(5 > 7 and 5 > 6 or 0 != 0 is true")
-}
-else {
-	print("(5 > 7 and 5 > 6 or 0 != 0 is false")
-}
