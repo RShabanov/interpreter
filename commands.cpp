@@ -262,7 +262,7 @@ void Cmd::define_variable() {
 	var.create_var(token);
 	
 	parser.read_token();
-	if (token[0] == ',' || parser.is_end()) return;
+	if (parser.is_comma(token[0]) || parser.is_end()) return;
 	else if (token[0] == '=') {
 		parser.putback_token();
 		program = line;
@@ -280,7 +280,7 @@ void Cmd::out_string(std::string& result_str) {
 		parser.read_token();
 		if (parser.is_end() || token[0] == ')' ||
 			token[0] == '}' && !brackets.braces_size())
-			break; // если отсутсвует ) продолжить ввод
+			break;
 
 		if (token_type == QUOTE) result_str += token;
 		else {
@@ -291,7 +291,7 @@ void Cmd::out_string(std::string& result_str) {
 		}
 		parser.read_token();
 
-		if (token[0] == ',')
+		if (parser.is_comma(token[0]))
 			result_str += " ";
 		else if (token[0] == ')') break;
 	}
@@ -309,7 +309,7 @@ int Cmd::get_params_cnt() {
 				parser.read_token();
 				if (token_type == STRING || token_type == VARIABLE)
 					cnt++;
-				else if (token[0] == ',') {
+				else if (parser.is_comma(token[0])) {
 					parser.read_token();
 					if (token_type != STRING && token_type != VARIABLE)
 						throw Exception(INVALID_SYNTAX);
@@ -454,7 +454,7 @@ void Executive::assign_variable() {
 	register std::string target(token);
 
 	parser.read_token();
-	if (token[0] == ',') return;
+	if (parser.is_comma(token[0])) return;
 	if (token[0] == '=') {
 		parser.read_token();
 
@@ -478,58 +478,20 @@ double Executive::compute_expr() {
 	// 2 * input() ...
 	// input() * input() - 5 * input(), etc
 
-	std::string expr;
-	read_expr(expr);
-
-	register double res = NAN;
-	register char* temp = program;
-
-	try {
-		program = const_cast<char*>(expr.c_str());
-		parser.parse(res);
-	}
-	catch (Exception& e) {
-		program = temp;
-		throw e;
-	}
-
-	program = temp;
-	return res;
-}
-
-
-////////////////////////////////////////////
-////									////
-////	PRIVATE METHODS (EXECUTIVE)		////
-////									////
-////////////////////////////////////////////
-
-inline bool Executive::not_executive() const {
-	return token_type == VARIABLE || token_type == NUMBER ||
-		parser.is_expression(token[0]);
-}
-
-
-void Executive::read_expr(std::string& expr) {
-	//size_t parenthesis_cnt = brackets.parenthesis_size();
 	size_t parenthesis_cnt = 0;
-	std::string temp;
-
-	// TODO
-	// разобраться со скобками 
-	// e.g. print("not 5 - 2 > 2:\t", (not (5 - 2 > 2) ) )
+	std::string temp, expr;
 
 	while (true) {
 		parser.read_token();
 
-		if (token[0] == '{' || token[0] == '}' ||
-			parser.is_end()) break;
+		if (parser.is_expr_end()) break;
 
-		if (token[0] == '(' || token[0] == ')') {
+		if (brackets.is_parenthesis(token[0])) {
 			parenthesis_cnt += token[0] == '(' ? 1 : -1;
 			if (parenthesis_cnt == SIZE_MAX &&
 				brackets.parenthesis_size() >= 0)
 				break;
+
 			temp += token;
 		}
 		else if (not_executive()) {
@@ -548,7 +510,7 @@ void Executive::read_expr(std::string& expr) {
 					temp = "(" + temp + ")" + (tok == AND ? "*" : "+");
 				else
 					temp += "(" + std::to_string(!get_condition_not()) + ")";
-				
+
 				expr += temp;
 				temp.clear();
 				continue;
@@ -557,8 +519,7 @@ void Executive::read_expr(std::string& expr) {
 		}
 		else if (fun.is_fun(token)) {
 			execute_fun(token);
-			if (isdigit(token[0]) || token[0] == '-' ||
-				token[0] == '+')
+			if (contains_number(token[0]))
 				temp += token;
 			else throw Exception(INVALID_TYPE);
 		}
@@ -568,18 +529,25 @@ void Executive::read_expr(std::string& expr) {
 
 		temp += " ";
 	}
-
 	parser.putback_token();
-	if (contains_alnum(temp)) 
+
+	if (contains_alnum(temp))
 		expr += "(" + temp + ")";
 	else expr += temp;
+
+	return get_number(expr);
 }
 
-bool Executive::contains_alnum(std::string& expr) const {
-	for (auto symbol : expr)
-		if (isalnum(symbol))
-			return true;
-	return false;
+
+////////////////////////////////////////////
+////									////
+////	PRIVATE METHODS (EXECUTIVE)		////
+////									////
+////////////////////////////////////////////
+
+inline bool Executive::not_executive() const {
+	return token_type == VARIABLE || token_type == NUMBER ||
+		parser.is_expression(token[0]);
 }
 
 
@@ -591,10 +559,9 @@ bool Executive::get_condition_not() {
 	while (true) {
 		parser.read_token();
 
-		if (token[0] == '{' || token[0] == '}' ||
-			parser.is_end()) break;
+		if (parser.is_expr_end()) break;
 
-		if (token[0] == '(' || token[0] == ')') {
+		if (brackets.is_parenthesis(token[0])) {
 			parenthesis_cnt += token[0] == '(' ? 1 : -1;
 			if (has_logic_oper && !parenthesis_cnt ||
 				parenthesis_cnt == SIZE_MAX) break;
@@ -613,7 +580,6 @@ bool Executive::get_condition_not() {
 				temp += token;
 			}
 			else if (cmd.is_logic_oper(tok)) {
-
 				if (tok == NOT) 
 					temp += "(" + std::to_string(!get_condition_not()) + ")";
 				else {
@@ -621,13 +587,6 @@ bool Executive::get_condition_not() {
 						temp = "(" + temp + ")" + (tok == AND ? "*" : "+");
 					else break;
 				}
-				/*if (parenthesis_cnt) {
-					if (tok != NOT)
-						temp = "(" + temp + ")" + (tok == AND ? "*" : "+");
-					else
-						temp += "(" + std::to_string(!get_condition_not()) + ")";
-				}
-				else break;*/
 
 				has_logic_oper = true;
 				expr += temp;
@@ -638,8 +597,7 @@ bool Executive::get_condition_not() {
 		}
 		else if (fun.is_fun(token)) {
 			execute_fun(token);
-			if (isdigit(token[0]) || token[0] == '-' ||
-				token[0] == '+')
+			if (contains_number(token[0]))
 				temp += token;
 			else throw Exception(INVALID_TYPE);
 		}
@@ -654,6 +612,11 @@ bool Executive::get_condition_not() {
 		expr += "(" + temp + ")";
 	else expr += temp;
 
+	return get_number(expr);
+}
+
+
+double Executive::get_number(std::string& expr) {
 	if (expr.empty()) throw Exception(INVALID_SYNTAX);
 
 	register double res = NAN;
@@ -737,6 +700,18 @@ void Executive::invert_opers() {
 		token = "||";
 		break;
 	}
+}
+
+inline bool Executive::contains_number(char symbol) const {
+	return isdigit(symbol) || symbol == '-' ||
+		symbol == '+';
+}
+
+inline bool Executive::contains_alnum(std::string& expr) const {
+	for (auto symbol : expr)
+		if (isalnum(symbol))
+			return true;
+	return false;
 }
 
 
@@ -832,133 +807,7 @@ void FunFunctor::read_param_value(std::vector<double>& values) {
 				else throw Exception(INVALID_TYPE);
 			}
 			values.push_back(val);
-		} while (token[0] == ',');
+		} while (parser.is_comma(token[0]));
 	}
 	else throw Exception(EXTRA_BRACKET);
 }
-
-
-
-//bool Executive::read_condition() {
-//	register bool fst_pass = false;
-//	bool res = false;
-//	register char* temp_start = program;
-//	register double fst = NAN, snd = NAN;
-//	register int oper = 0;
-//
-//	std::string expr;
-//	size_t parenthesis_cnt = brackets.parenthesis_size();
-//	while (true) {
-//		parser.read_token();
-//		if (token[0] == '(')
-//			continue;
-//		if (token[0] == ')') {
-//			temp_start = program;
-//			program = const_cast<char*>(expr.c_str());
-//			if (fst_pass) {
-//				parser.parse(snd);
-//				fst = res = cmd.logic_oper(oper, fst, snd);
-//				expr = std::to_string(res);
-//				fst_pass = !fst_pass;
-//
-//				program = temp_start;
-//				if (parenthesis_cnt > 0) break;
-//			}
-//			else {
-//				parser.parse(fst);
-//				expr = std::to_string(fst);
-//				/*expr.clear();
-//				fst_pass = !fst_pass;*/
-//			}
-//			oper = 0;
-//			program = temp_start;
-//		}
-//		else if (exec.not_executive()) {
-//			if (token_type == DELIMITER) exec.invert_opers();
-//			expr += token;
-//		}
-//		else if (fun.is_fun(token)) {
-//			execute_fun(token);
-//			if (isdigit(token[0]) || token[0] == '-' ||
-//				token[0] == '+') expr += token;
-//			else throw Exception(INVALID_TYPE);
-//		}
-//		else if (cmd.is_cmd(token, tok)) {
-//			if (cmd.is_return_cmd(tok)) {
-//				if (tok == RETURN) throw Exception(INVALID_SYNTAX);
-//				cmd.execute(tok);
-//				expr += token;
-//			}
-//			else if (cmd.is_logic_oper(tok)) {
-//				temp_start = program;
-//				register int temp_oper = tok;
-//				program = const_cast<char*>(expr.c_str());
-//
-//				if (fst_pass) {
-//					if (tok == AND && oper == OR) {
-//						program = temp_start;
-//						program -= expr.length() + 3; // len("and") == 3
-//						snd = read_condition();
-//						fst = res = cmd.logic_oper(oper, fst, snd);
-//
-//						parser.read_token();
-//						if (cmd.is_cmd(token, tok) && (tok == AND || tok == OR))
-//							oper = tok;
-//						else {
-//							parser.putback_token();
-//							break;
-//						}
-//					}
-//					else {
-//						//temp_start = program;
-//						parser.parse(snd);
-//						program = temp_start;
-//						fst = res = cmd.logic_oper(oper, fst, snd);
-//						oper = temp_oper; // запоминаем операцию
-//					}
-//					expr.clear();
-//					//expr = std::to_string(res);
-//				}
-//				else {
-//					parser.parse(fst);
-//					expr.clear();
-//					fst_pass = !fst_pass;
-//					program = temp_start;
-//					oper = temp_oper; // запоминаем операцию
-//				}
-//			}
-//			else throw Exception(INVALID_SYNTAX);
-//		}
-//		else if (token_type == STRING)
-//			throw Exception(UNDEFINED_NAME);
-//		else {
-//			if (parenthesis_cnt != brackets.parenthesis_size())
-//				throw Exception(EXTRA_BRACKET);
-//
-//			parser.putback_token();
-//			temp_start = program;
-//			program = const_cast<char*>(expr.c_str());
-//			if (fst_pass) {
-//				parser.parse(snd);
-//				res = cmd.logic_oper(oper, fst, snd);
-//			}
-//			else {
-//				parser.parse(fst);
-//				res = fst;
-//			}
-//
-//			expr.clear();
-//			oper = 0;
-//			fst_pass = !fst_pass;
-//			program = temp_start;
-//
-//			if (std::isnan(fst) && std::isnan(snd))
-//				throw Exception(INVALID_SYNTAX);
-//
-//			break;
-//		}
-//
-//		expr += " ";
-//	}
-//	return res;
-//}

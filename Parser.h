@@ -50,7 +50,9 @@ public:
 	bool is_end() const;
 	bool is_eof() const;
 	bool is_eol() const;
-	bool is_expression(char);
+	bool is_expression(char) const;
+	bool is_expr_end() const;
+	bool is_comma(char) const;
 
 	void read_token();
 	void putback_token();

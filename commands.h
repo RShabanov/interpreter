@@ -48,22 +48,22 @@ public:
 
 
 class Executive {
-	void read_expr(std::string&);
 	void invert_opers(); // opers from token.h
 	void eval_var();
 
 	double get_value();
+	double get_number(std::string&);
 
 	bool not_executive() const;
 	bool get_condition_not();
 	bool contains_alnum(std::string&) const;
+	bool contains_number(char) const;
 
 public:
 	void eval(const char*);
 	void assign_variable();
 
 	double compute_expr();
-	//bool read_condition();
 };
 extern Executive exec;
 

@@ -264,7 +264,7 @@ inline void Parser::skip_space() {
 	while (is_space(*program)) program++;
 }
 
-bool Parser::is_expression(char symbol) {
+bool Parser::is_expression(char symbol) const {
 	const char opers[] = { '+','-','/','*','^','>','<', EQ, NE, GE, LE, 0 };
 	return strchr(opers, symbol) && symbol != '\0';
 }
@@ -279,6 +279,14 @@ bool Parser::is_eof() const {
 
 bool Parser::is_eol() const {
 	return tok == EOL;
+}
+
+bool Parser::is_expr_end() const {
+	return token[0] == '{' || token[0] == '}' || is_end();
+}
+
+bool Parser::is_comma(char) const {
+	return token[0] == ',';
 }
 
 

@@ -69,11 +69,11 @@ bool Brackets::empty() const {
 }
 
 bool Brackets::is_parenthesis(char symbol) const {
-	return strchr("()", symbol);
+	return strchr("()", symbol) && symbol != '\0';
 }
 
 bool Brackets::is_brace(char symbol) const {
-	return strchr("{}", symbol);
+	return strchr("{}", symbol) && symbol != '\0';
 }
 
 bool Brackets::is_bracket(char symbol) const {
