@@ -1,0 +1,18 @@
+let a = 5
+
+fun boo(let a) {
+	a = 8
+	print("a:", a)
+}
+
+print("a before boo:", a)
+boo(a)
+print("a after boo:", a, "\n")
+
+print("but")
+
+fun foo() {
+	let a = 8
+	print("a:", a)
+}
+foo()

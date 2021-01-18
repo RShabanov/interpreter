@@ -50,6 +50,8 @@ public:
 	bool is_cmd(const std::string& _cmd, int& pos);
 
 	void execute(int cmd_token);
+
+	void clear();
 } cmd;
 
 
@@ -81,7 +83,6 @@ extern Executive exec;
 static class FunFunctor {
 	void execute(std::vector<double>&);
 	void add_fun_vars(std::vector<double>&);
-	//void del_fun_vars(std::multimap<std::string, double>&);
 public:
 	void operator()(const std::string&);
 } execute_fun;

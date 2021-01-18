@@ -1,0 +1,15 @@
+let a = 3, b = 5
+print("a:", a)
+print("b:", b)
+
+if let c = a {
+	print("Interception!!!")
+}
+elif a == b {
+	let c = a
+	print("a == b")
+}
+else {
+	let c = b
+	print("b < a")
+}

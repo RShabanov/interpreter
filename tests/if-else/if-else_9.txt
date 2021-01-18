@@ -1,0 +1,7 @@
+if ((5 - 2)*3 > 2 or 7 > 5 and 5 - 4 != 0) and 5 + 2 >= 7
+{
+	print("((5 - 2)*3 > 2 or 7 > 5 and 5 - 4 != 0) and 5 + 2 >= 7 is true")
+}
+else {
+	print("((5 - 2)*3 > 2 or 7 > 5 and 5 - 4 != 0) and 5 + 2 >= 7 is false")
+}

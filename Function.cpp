@@ -63,3 +63,7 @@ void Function::delete_fun(const std::string& key) {
 		funs.erase(it);
 	else throw Exception(UNKNOWN_ERROR);
 }
+
+void Function::clear() {
+	funs.clear();
+}

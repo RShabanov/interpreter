@@ -61,3 +61,7 @@ void Var::restore(std::multimap<std::string, double>& _vars) {
 void Var::copy_to(std::multimap<std::string, double>& target) {
 	target = vars;
 }
+
+void Var::clear() {
+	vars.clear();
+}

@@ -18,12 +18,14 @@ public:
 	void assign_var(const std::string&, double);
 	void create_var(const std::string&, double = NAN);
 
-	// leaves variables which have the same names,
-	// thier values 
-	void restore_with_changes(std::multimap<std::string, double>& vars);
-	void restore(std::multimap<std::string, double>& vars);
+	// leaves variables which have the same names with new values
+	void restore_with_changes(std::multimap<std::string, double>& _vars);
+	
+	// set vars equal to _vars
+	void restore(std::multimap<std::string, double>& _vars);
 	void copy_to(std::multimap<std::string, double>& target);
 
+	void clear();
 };
 
 extern Var var;

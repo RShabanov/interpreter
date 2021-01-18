@@ -1,0 +1,18 @@
+print("Test #1\n")
+
+let a = 5, b = 3
+print("a =", a, "\nb =", b, end="\n\n")
+
+print("let c = input(\"Enter value for c: \") - a * b")
+let c = input("Enter value for c: ") - a * b
+print("c =", c, end="\n\n")
+
+print("a = b = input(\"Enter value for a and b: \")")
+a = b = input("Enter value for a and b: ")
+print("a =", a, "\nb =", b, end="\n\n")
+
+print("c = a = input(\"Enter another value: \") - 2 = b")
+c = a = input("Enter another value: ") - 2 = b
+print("a =", a)
+print("b =", b)
+print("c =", c)

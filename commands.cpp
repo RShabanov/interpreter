@@ -149,7 +149,10 @@ void Cmd::cmd_let() {
 
 void Cmd::cmd_if() {
 	// if condition { ... }
-	bool condition = exec.compute_expr();
+	register double res = exec.compute_expr();
+	if (std::isnan(res)) throw Exception(INVALID_SYNTAX);
+
+	bool condition = res;
 
 	parser.skip_eol();
 	parser.read_token();
@@ -533,6 +536,11 @@ bool Cmd::is_logic_oper(int _tok) {
 	return false;
 }
 
+void Cmd::clear() {
+	return_cmd.clear();
+	cmd_table.clear();
+}
+
 
 
 
@@ -870,7 +878,9 @@ void FunFunctor::operator()(const std::string& key) {
 		std::vector<double> values;
 		exec.read_param_value(values);
 
-		for (auto it = range.first; it != range.second; it++)
+		auto stop_fun = --range.first;
+
+		for (auto it = --range.second; it != stop_fun; it--)
 			if (it->second.argc == values.size()) {
 				register char* temp = program;
 

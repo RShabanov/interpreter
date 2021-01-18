@@ -1,0 +1,3 @@
+print("Pretty woman", end="\nWalking down the street")
+
+print("Strange times", 5}) # error

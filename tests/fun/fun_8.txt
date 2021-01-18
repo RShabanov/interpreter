@@ -1,0 +1,12 @@
+# test_fun #7
+fun foo() {
+	print("foo")
+	
+	fun foo() {
+		print("foo in foo")
+	}
+	foo()
+}
+foo()
+print("Did you see it? All right, let's do this again!")
+foo()

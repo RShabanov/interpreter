@@ -4,34 +4,58 @@
 
 
 
+void run_all_tests(Scanner&);
+
+
 int main(int argc, char* argv[]) {
 	using namespace std;
 
 	Scanner scanner;
-	scanner.run("./tests/math/log_1.txt");
-	//scanner.run();
+	//scanner.run("./tests/test.txt");
 
-	/*program = const_cast<char*>(
-		"((5 > 2) * ((3 > 7)) + (8 < 0)) * 2 == 0"
-		);
-
-	double res;
-	parser.parse(res);
-
-	cout << res << endl;
-	cin.get();*/
-
-	/*if (argc > 1) {
+	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
 			cout << "--------------------------" << endl;
 			cout << argv[i] << endl << endl;
 			scanner.run(argv[i]);
 		}
 	}
-	else {
-		in = &cin;
-		scanner.run();
-	}*/
+	else run_all_tests(scanner);
 
 	return 0;
+}
+
+
+void run_all_tests(Scanner& scanner) {
+	// since my MVS doesn't support C++17
+	// I do this
+
+	constexpr size_t DIR_C = 5;
+	std::string filename;
+
+	struct {
+		std::string dir;
+		size_t files_cnt;
+	} dirs[DIR_C] = {
+		//"fun", 9,
+		"if-else", 11,
+		"loop", 2,
+		"math", 4,
+		"other", 3
+	};
+
+	for (size_t i = 0; i < DIR_C; i++)
+		for (size_t file_n = 0; file_n < dirs[i].files_cnt; file_n++) {
+			filename = "./tests/" + dirs[i].dir + "/" +
+				dirs[i].dir + "_" + std::to_string(file_n) + ".txt";
+
+			std::cout << "Test of " << dirs[i].dir << std::endl
+				<< "test # " << file_n << std::endl;
+
+			scanner.run(filename.c_str());
+			system("cls");
+		}
+
+	std::cout << "That's all" << std::endl;
+	std::cin.get();
 }

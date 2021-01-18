@@ -1,9 +1,6 @@
 #pragma once
-#include <istream>
 #include <string>
 
-
-extern std::istream* in;
 
 extern char* program, *prog_start;
 

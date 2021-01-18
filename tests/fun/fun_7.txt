@@ -1,0 +1,11 @@
+# test_fun #7
+fun foo() {
+	print("foo")
+	
+	fun boo() {
+		print("boo in foo")
+	}
+	boo()
+}
+foo()
+boo()

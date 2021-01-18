@@ -1,0 +1,21 @@
+let a = 2, b = 3
+print("a:", a)
+print("b:", b)
+
+if a > b {
+	let c = a
+	print("a > b")
+	print("c:", c)
+}
+elif a == b {
+	let c = a
+	print("a == b")
+	print("c:", c)
+}
+else {
+	let c = b
+	print("b < a")
+	print("c:", c)
+}
+
+print("c:", c)

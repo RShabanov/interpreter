@@ -35,5 +35,6 @@ public:
 	void add_fun(const std::string& _name,
 		std::string& _body, int _argc);
 	void delete_fun(const std::string&);
+	void clear();
 };
 extern Function fun;

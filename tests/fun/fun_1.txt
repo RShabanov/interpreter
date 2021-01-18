@@ -1,0 +1,6 @@
+fun voo(let a) {
+	print("voo")
+	return input()
+	print("end of voo")
+}
+print("voo(print(\"Nova baby\")) - 2:", voo(print("Nova baby")) - 2)
