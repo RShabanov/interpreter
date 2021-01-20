@@ -1,7 +1,7 @@
 #include "commands.h"
 
 
-
+double return_value = NAN;
 Executive exec;
 // ----------------------------------
 
@@ -85,7 +85,7 @@ void Cmd::cmd_print() {
 		out_string(result_str); // подготовить строку к выводу
 
 		if (token[0] == ')')
-			std::cout << result_str; //  << std::endl
+			std::cout << result_str;
 		else throw Exception(EXTRA_BRACKET);
 	}
 	else throw Exception(INVALID_SYNTAX);
@@ -129,8 +129,8 @@ void Cmd::cmd_let() {
 		do {
 			parser.read_token();
 
-			if (token_type == STRING && !is_cmd(token, tok) &&
-				!fun.is_fun(token)) {
+			if ((token_type == STRING || !var.in_last_namespace(token)) && 
+				!is_cmd(token, tok) && !fun.is_fun(token)) {
 				var_map.push_back(token);
 				define_variable();
 			}
@@ -158,8 +158,7 @@ void Cmd::cmd_if() {
 	parser.read_token();
 
 	if (token[0] == '{') {
-		std::multimap<std::string, double> vars;
-		var.copy_to(vars);
+		var.create_namespace();
 
 		try {
 			if (condition) {
@@ -172,10 +171,10 @@ void Cmd::cmd_if() {
 				// to continue in the following branch if there is
 				following_branch();
 			}
-			var.restore_with_changes(vars);
+			var.delete_last_namespace();
 		}
 		catch (Exception& e) {
-			var.restore(vars);
+			var.delete_last_namespace();
 			throw e;
 		}
 	}
@@ -195,15 +194,14 @@ void Cmd::cmd_else() {
 		parser.read_token();
 
 		if (token[0] == '{') {
-			std::multimap<std::string, double> vars;
-			var.copy_to(vars);
+			var.create_namespace();
 
 			try {
 				exec.eval();
-				var.restore_with_changes(vars);
+				var.delete_last_namespace();
 			}
 			catch (Exception& e) {
-				var.restore(vars);
+				var.delete_last_namespace();
 				throw e;
 			}
 		}
@@ -213,15 +211,13 @@ void Cmd::cmd_else() {
 }
 
 
-
 void Cmd::cmd_while() {
 	// while condition { ... }
 	register char* loop_start = program;
 	bool condition = exec.compute_expr();
 
 	if (condition) {
-		std::multimap<std::string, double> vars;
-		var.copy_to(vars);
+		var.create_namespace();
 
 		try {
 			do {
@@ -232,14 +228,13 @@ void Cmd::cmd_while() {
 
 				exec.eval();
 				program = loop_start;
-
-				var.restore_with_changes(vars);
+				var.delete_last_namespace();
 			} while (exec.compute_expr());
 
 			skip_executive_block();
 		}
 		catch (Exception& e) {
-			var.restore(vars);
+			var.delete_last_namespace();
 			throw e;
 		}
 	}
@@ -275,6 +270,11 @@ void Cmd::cmd_fun() {
 
 void Cmd::cmd_return() {
 	register double res = exec.compute_expr();
+	return_value = res;
+	//
+	//parser.skip_eol();
+	//parser.read_token();
+	//
 
 	if (parser.is_end() || token[0] == '}') {
 		while (*program) {
@@ -361,6 +361,11 @@ bool Cmd::is_return_cmd(int cmd_tok) {
 	return return_cmd.find(cmd_tok) != return_cmd.end();
 }
 
+bool Cmd::is_logic_oper(int _tok) {
+	if (_tok == AND || _tok == OR || _tok == NOT)
+		return true;
+	return false;
+}
 
 void Cmd::define_variable() {
 	register char* line = program - token.length();
@@ -530,12 +535,6 @@ void Cmd::jump_to_another_word() {
 	} while (!parser.is_eof() && token_type != STRING);
 }
 
-bool Cmd::is_logic_oper(int _tok) {
-	if (_tok == AND || _tok == OR || _tok == NOT)
-		return true;
-	return false;
-}
-
 void Cmd::clear() {
 	return_cmd.clear();
 	cmd_table.clear();
@@ -653,8 +652,12 @@ double Executive::compute_expr() {
 		}
 		else if (fun.is_fun(token)) {
 			execute_fun(token);
-			if (contains_number(token[0]))
-				temp += token;
+			/*if (contains_number(token[0]))
+				temp += token;*/
+			if (tok == RETURN) {
+				temp += std::to_string(return_value);
+				return_value = NAN;
+			}
 			else throw Exception(INVALID_TYPE);
 		}
 		else if (token_type == STRING)
@@ -701,6 +704,17 @@ inline bool Executive::not_executive() const {
 		parser.is_expression(token[0]);
 }
 
+inline bool Executive::contains_number(char symbol) const {
+	return isdigit(symbol) || symbol == '-' ||
+		symbol == '+';
+}
+
+inline bool Executive::contains_alnum(std::string& expr) const {
+	for (auto symbol : expr)
+		if (isalnum(symbol))
+			return true;
+	return false;
+}
 
 bool Executive::get_condition_not() {
 	register size_t parenthesis_cnt = 0;
@@ -785,7 +799,6 @@ double Executive::get_number(std::string& expr) {
 }
 
 
-
 double Executive::get_value() {
 	register double res;
 	register char* temp = program - token.length();
@@ -842,25 +855,7 @@ void Executive::invert_opers() {
 	case LE:
 		token = "<=";
 		break;
-	case AND:
-		token = "&&";
-		break;
-	case OR:
-		token = "||";
-		break;
 	}
-}
-
-inline bool Executive::contains_number(char symbol) const {
-	return isdigit(symbol) || symbol == '-' ||
-		symbol == '+';
-}
-
-inline bool Executive::contains_alnum(std::string& expr) const {
-	for (auto symbol : expr)
-		if (isalnum(symbol))
-			return true;
-	return false;
 }
 
 
@@ -901,8 +896,7 @@ void FunFunctor::operator()(const std::string& key) {
 }
 
 void FunFunctor::execute(std::vector<double>& values) {
-	std::multimap<std::string, double> vars;
-	var.copy_to(vars);
+	var.create_namespace();
 
 	auto temp_funs(fun.funs);
 
@@ -916,11 +910,11 @@ void FunFunctor::execute(std::vector<double>& values) {
 		else throw Exception(EXTRA_BRACKET);
 
 		fun.funs = temp_funs;
-		var.restore_with_changes(vars);
+		var.delete_last_namespace();
 		tok = RETURN;
 	}
 	catch (Exception& e) {
-		var.restore(vars);
+		var.delete_last_namespace();
 		fun.funs = temp_funs;
 		throw e;
 	}

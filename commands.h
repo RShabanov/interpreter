@@ -19,7 +19,7 @@ static class Cmd {
 	int get_params_cnt();
 	void get_fun_body(std::string&);
 
-	void skip_executive_block(); // название придумать получше
+	void skip_executive_block();
 	void skip_rest_conditional();
 	void following_branch();
 	void jump_to_another_word();

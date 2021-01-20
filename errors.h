@@ -22,7 +22,8 @@ enum error_types {
 	ELIF_WITHOUT_IF,
 	ELSE_WITHOUT_IF,
 	BAD_VALUE,
-	INVALID_LOG_BASE
+	INVALID_LOG_BASE,
+	STACK_OVERFLOW
 };
 
 
@@ -47,5 +48,6 @@ static const char* errors[]{
 	"elif cannot be used without \"if\".",
 	"else cannot be used without \"if\".",
 	"bad value.",
-	"invalid logarithm base."
+	"invalid logarithm base.",
+	"stack overflow."
 };

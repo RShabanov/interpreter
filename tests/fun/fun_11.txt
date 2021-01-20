@@ -1,0 +1,11 @@
+fun test() {
+	let a = 5
+	print("a in test:", a)
+	test2()
+}
+fun test2() {
+	let a = 6
+	print("a in test2:", a)
+}
+
+test()

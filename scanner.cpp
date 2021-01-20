@@ -36,6 +36,8 @@ void Scanner::reset(const char* _str) const {
 	var.clear();
 	fun.clear();
 	//cmd.clear();
+
+	var.create_namespace();
 }
 
 void Scanner::read_file(const char* filename, std::string& code) const {

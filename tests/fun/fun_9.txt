@@ -1,0 +1,14 @@
+fun foo(let a) {
+	if a > 0 {
+  		return -a
+	}
+  	print("a:", a)
+}
+
+let a = 5
+print("a > 0:\t", foo(a))
+
+a = 0
+foo(a)
+
+

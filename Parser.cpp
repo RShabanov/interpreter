@@ -4,10 +4,7 @@
 // -------------------------------
 Parser parser;
 
-Parser::Parser() {
-	//token_type = 0;
-	//prog_start = program = 0;
-}
+Parser::Parser() {}
 
 Parser::~Parser() {}
 
@@ -179,7 +176,7 @@ void Parser::read_token() {
 	token_type = 0;
 	tok = 0;
 
-	skip_space(); // добавить сюда экранированные символы ???
+	skip_space();
 
 	if (is_eof(*program)) token_eof();
 	else if (is_cr(*program)) token_cr();

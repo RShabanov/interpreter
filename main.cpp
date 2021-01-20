@@ -11,7 +11,6 @@ int main(int argc, char* argv[]) {
 	using namespace std;
 
 	Scanner scanner;
-	//scanner.run("./tests/test.txt");
 
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
@@ -37,11 +36,11 @@ void run_all_tests(Scanner& scanner) {
 		std::string dir;
 		size_t files_cnt;
 	} dirs[DIR_C] = {
-		//"fun", 9,
+		"fun", 12,
 		"if-else", 11,
 		"loop", 2,
 		"math", 4,
-		"other", 3
+		"other", 4
 	};
 
 	for (size_t i = 0; i < DIR_C; i++)

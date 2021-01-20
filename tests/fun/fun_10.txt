@@ -1,0 +1,7 @@
+fun foo() {
+	return 3
+}
+
+fun boo() { return foo() }
+fun coo() { return boo() }
+print("coo():", coo())
